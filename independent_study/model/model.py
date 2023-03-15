@@ -1,4 +1,4 @@
-# NCHU EE
+# NCHUEE大學專題  組員: 陳柏翔 陳沛昀
 import torch
 import numpy
 from torch import nn
@@ -19,36 +19,35 @@ from hrnet import HighResolutionNet
 #         scale = torch.abs(self.scale * self.lr_mult)
 #         return x * scale
 
-class ConvBlock(nn.Module):
-    def __init__(self, in_ch, out_ch, kernal, stride, padding=None, dilation=None, bn=nn.BatchNorm2d):
-        super(ConvBlock, self).__init__()
-        
 
 class IGGNet(nn.Module):  # Interaction-Guided Gating Network
     def __init__(self, ):
-        super(IGGNet).__init__()
-        
-    def forward(self, hint_heatmap: Tensor, feature_map: Tensor, cfg: dict):
+        super(IGGNet, self).__init__()
+
+    def forward(self, hint_heatmap:Tensor, feature_map:Tensor):
+        f = F.interpolate(input=hint_heatmap, size=feature_map.size()[2:], mode="bilinear", align_corners=True)
         pass
 
 
 class HintFusionLayer(nn.Module):
-    def __init__(self, im_ch:int, in_ch:int, out_ch=64):
+    def __init__(self, im_ch:int, in_ch:int, out_ch=64, ScaleLayer=True):
         """
         im_ch: Num of input image's channels
         in_ch: Num of "hintmap_encoder's input channels", equals to keypoints*2
         out_ch: Num of channels equals to "input channels of HRNet"
         """
         super(HintFusionLayer, self).__init__()
+        self.ScaleLayer = ScaleLayer
         init_value = 0.05
         lr_mult = 1
-        self.scale = nn.Parameter(
-            torch.full((1,), init_value / lr_mult, dtype=torch.float32)
-        )
         self.hintmap_encoder = nn.Sequential(
             nn.Conv2d(in_channels=in_ch, out_channels=16, kernel_size=1),
             nn.LeakyReLU(negative_slope=0.2),
             nn.Conv2d(in_channels=16, out_channels=out_ch, kernel_size=3, stride=2, padding=1)
+        )
+        self.lr_mult = lr_mult
+        self.scale = nn.Parameter(
+            torch.full((1,), init_value / lr_mult, dtype=torch.float32)
         )
         self.image_encoder = nn.Sequential(
             nn.Conv2d(in_channels=im_ch, out_channels=out_ch, kernel_size=3, stride=2, padding=1, bias=False),
@@ -61,11 +60,12 @@ class HintFusionLayer(nn.Module):
             nn.ReLU(inplace=True)
         )
         
-    def forward(self, input_image, hint_heatmap, prev_heatmap):
+    def forward(self, input_image:Tensor, hint_heatmap:Tensor, prev_heatmap:Tensor):
         f = torch.cat((hint_heatmap, prev_heatmap))
         f = self.hintmap_encoder(f)
-        scale = torch.abs(self.scale * self.lr_mult)
-        f = f * scale
+        if self.ScaleLayer:
+            scale = torch.abs(self.scale * self.lr_mult)
+            f = f * scale
         f = f + self.image_encoder(input_image)
         f = self.last_encoder(f)
         return f        
@@ -76,7 +76,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         super(IKEM, self).__init__()
         
         # Hint Fusion Layer
-        self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_CHANNEL, cfg.NUM_KEYPOINTS*2, cfg.HintFusionLayer.ENCODE_CHANNEL)
+        self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_SIZE[0], cfg.NUM_KEYPOINTS*2, cfg.HintFusionLayer.out_channel)
         
         # 引入 HRNet
         self.hrnet = HighResolutionNet()
