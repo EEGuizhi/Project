@@ -1,6 +1,9 @@
 import numpy as np
 import torch
+import os
+
 import torch.nn as nn
+from torch import Tensor
 
 ### python index test ###
 # heatmap = np.array([[0.2, 0.5, 0.8], [0.9, 0.3, 0.6], [0.1, 0.7, 0.4]])
@@ -62,5 +65,107 @@ import torch.nn as nn
 
 
 ### operation '//' test ###
-print(256/16)
-print(256//16)
+# print(256/16)
+# print(256//16)
+
+
+### next() ###
+# list=[1,2,3,4]
+# it = iter(list)
+# print(next(it))
+
+
+### nn.Parameter test ###
+# class ScaleLayer(nn.Module):
+#     def __init__(self, init_value=1.0, lr_mult=1):
+#         super().__init__()
+#         self.lr_mult = lr_mult
+#         self.scale = nn.Parameter(
+#             torch.full((1,), init_value / lr_mult, dtype=torch.float32)
+#         )
+        
+#         # a = torch.tensor([3, 4], dtype=torch.float64)
+
+#     def forward(self, x):
+#         scale = torch.abs(self.scale * self.lr_mult)
+#         return x * scale
+
+
+# model = ScaleLayer()
+
+# model.state_dict()
+# for para in model.parameters():
+#     print(para)
+
+
+### random select test ###
+# test_paths = ['dataset/img_A.jpg','dataset/img_B.jpg','dataset/img_C.jpg','dataset/img_D.jpg','dataset/img_E.jpg','dataset/img_F.jpg','dataset/img_G.jpg']
+# print("test_paths: {}".format(test_paths))
+
+# idx = sorted(np.random.choice(range(len(test_paths)), size=3, replace=False, p=None))
+# print(">> idx len: {}, idx: {}".format(len(idx), idx))
+
+# # select_img_paths = np.array(test_paths)[idx].tolist()
+# select_img_paths = np.array(test_paths)[idx]
+# print(">> select_lmg_paths: {}".format(select_img_paths))
+
+
+### load image test ###
+# from PIL import Image
+# image_path = "D:/python/interactive_keypoint_estimation/code/data/dataset16/boostnet_labeldata/data/test/sunhl-1th-01-Mar-2017-310 C AP.jpg"
+
+# img = np.array(Image.open(os.path.join(image_path)))
+# print(">> origin size: {}".format(img.shape))
+
+# img = np.repeat(np.array(Image.open(os.path.join(image_path)))[:,:,None], 3, axis=-1)
+# print(">> new size: {}".format(img.shape))
+
+
+### loading .mat file test ###
+# import scipy.io
+# content = scipy.io.loadmat("D:/python/interactive_keypoint_estimation/code/data/dataset16/boostnet_labeldata/labels/test/sunhl-1th-01-Mar-2017-310 C AP.jpg.mat")
+# print(">> sunhl-1th-01-Mar-2017-310 C AP.jpg.mat: \n{}".format(content))
+
+# coords = content['p2']
+# print(">> keypoints coord:\n{}".format(coords))
+# print(">> keypoints coord[:, 1]:\n{}".format(coords[:, 1]))
+
+
+### copy list test ###
+# import copy
+# print("===")
+# a = [1, 2, 3, [99, 100]]
+# b = a
+# print("operation: b = a, b[3] = 4")
+# print(">> a: {}, b: {}".format(a, b))
+# b[3] = 4
+# print(">> a: {}, b: {}".format(a, b))
+
+# print("===")
+# a = [1, 2, 3, [99, 100]]
+# b = a.copy()  # or "b = list(a)", "b = a[:]"
+# print("operation: b = a.copy(), b[3] = 4")
+# print(">> a: {}, b: {}".format(a, b))
+# b[3] = 4
+# print(">> a: {}, b: {}".format(a, b))
+
+# print("===")
+# a = [1, 2, 3, [99, 100]]
+# b = a.copy()  # or "b = list(a)", "b = a[:]" (= shallow copy)
+# print("operation: b = a.copy(), b[3][0] = 4")
+# print(">> a: {}, b: {}".format(a, b))
+# b[3][0] = 4
+# print(">> a: {}, b: {}".format(a, b))
+
+# print("===")
+# a = [1, 2, 3, [99, 100]]
+# b = copy.deepcopy(a)  # deep copy
+# print("operation: b = copy.deepcopy(a), b[3][0] = 4")
+# print(">> a: {}, b: {}".format(a, b))
+# b[3][0] = 4
+# print(">> a: {}, b: {}".format(a, b))
+
+table = [{'key1': 1, 'key2': 2}, {'key1': 3, 'key2': 4}, {'key1': 5, 'key2': 6}]
+for _, item in enumerate(table):
+    item['key1'] = 99
+print(">> table: {}".format(table))
