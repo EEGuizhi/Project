@@ -15,6 +15,7 @@ from torch import Tensor
 # print("heatmap:", heatmap)  # output: heatmap: [[0.2 0.5 0.8]
 #                             #                   [0.9 0.  0.6]
 #                             #                   [0.  0.7 0. ]]
+# print(heatmap[:2])
 
 
 ### BCELoss test ###
@@ -90,9 +91,7 @@ from torch import Tensor
 #         scale = torch.abs(self.scale * self.lr_mult)
 #         return x * scale
 
-
 # model = ScaleLayer()
-
 # model.state_dict()
 # for para in model.parameters():
 #     print(para)
@@ -165,7 +164,164 @@ from torch import Tensor
 # b[3][0] = 4
 # print(">> a: {}, b: {}".format(a, b))
 
-table = [{'key1': 1, 'key2': 2}, {'key1': 3, 'key2': 4}, {'key1': 5, 'key2': 6}]
-for _, item in enumerate(table):
-    item['key1'] = 99
-print(">> table: {}".format(table))
+# table = [{'key1': 1, 'key2': 2}, {'key1': 3, 'key2': 4}, {'key1': 5, 'key2': 6}]
+# for _, item in enumerate(table):
+#     item['key1'] = 99
+# print(">> table: {}".format(table))
+
+
+### Array test ###
+# from tqdm.auto import tqdm
+# import time
+
+# test = torch.tensor([1, 2] + [77, 88])
+# print(">> test: {}".format(test))
+# print(">> test.sigmoid:",test.sigmoid())
+
+# NUM_KEYPOINTS = 68
+# num_dist = [1 / 2, 1 / 4, 1 / 8, 1 / 16, 1 / 32, 1 / 64, 1 / 128, 1 / 256, 1 / 512, 1 / 1024, 1 / 2048, 1 / 4096, 1 / 4096]+[0 for _ in range(NUM_KEYPOINTS-13)]
+# num_hint = np.random.choice(range(NUM_KEYPOINTS), size=None, p=num_dist)  # 產生次數
+# hint_indices = np.random.choice(range(NUM_KEYPOINTS), size=num_hint, replace=False) #[1,2,3]
+# print(">> num_hint:\n{}\n>> hint_indices:\n{}".format(num_hint, hint_indices))
+
+# for i, data in enumerate(tqdm(num_dist)):
+#     print("\n>> i: {}, data: {}".format(i, data))
+#     time.sleep(0.1)
+
+# batch_metric_value = Tensor([
+#     # batch 1
+#     [0.11, 0.12, 0.13],  # pic 1, 3 keypoints
+#     [0.21, 0.22, 0.23],  # pic 2, 3 keypoints
+#     [0.31, 0.32, 0.33] # pic 3, 3 keypoints
+# ])
+
+# batch_hint_index = [[1, 3], [2], []]
+
+# with torch.no_grad():
+#     for j, idx in enumerate(batch_hint_index):
+#         if idx is not None:
+#             print(">> idx:", idx)
+#             batch_metric_value[j, idx] = torch.full_like(batch_metric_value[j, idx], -1000)
+#     worst_index = batch_metric_value.argmax(-1, keepdim=True)
+# print(">> worst_index:\n", worst_index)
+
+# a = np.array([[0.1, 0.2, 0.3], [1.1, 1.2, 1.3]])
+# b = np.array([0, 2])
+# print(">>", a[0, b])
+
+
+# ### nii file
+# import nibabel as nib
+# import matplotlib.pyplot as plt
+
+# # 載入NIfTI檔案
+# # nii_img = nib.load('D:/python/volume-covid19-A-0025_ct_seg.nii')
+# nii_img = nib.load('D:/GitHub/EEGuizhi/Project/new_example.nii')
+
+# # 取得影像數據
+# img_data = nii_img.get_fdata()
+
+# # 顯示影像
+# plt.imshow(img_data[:, :, 5], cmap='gray')
+# plt.show()
+
+
+# ### nii file 2
+# import nibabel as nib
+# import matplotlib.pyplot as plt
+
+# # 讀取NIfTI檔案
+# # nii_file = nib.load('D:/python/liver_96_seg.nii')
+# nii_file = nib.load("D:/python/CTSpine1K-20230410T033504Z-001/CTSpine1K/completed_annotation_verse/verse074_seg.nii.gz")
+# img_data = nii_file.get_fdata()
+
+# # 創建一個3x1的子圖畫板
+# fig, axes = plt.subplots(nrows=3, ncols=1)
+
+# # 在不同的子圖中顯示從不同軸向的切片
+# axes[0].imshow(img_data[:, :, img_data.shape[2]//2], cmap='gray')
+# axes[0].set_title('Axial plane')
+# axes[1].imshow(img_data[:, img_data.shape[1]//2, :], cmap='gray')
+# axes[1].set_title('Coronal plane')
+# axes[2].imshow(img_data[img_data.shape[0]//2, :, :], cmap='gray')
+# axes[2].set_title('Sagittal plane')
+
+# # 顯示子圖畫板
+# plt.show()
+
+# ### nii file 3
+# import matplotlib
+# matplotlib.use('TkAgg')
+ 
+# from matplotlib import pylab as plt
+# import nibabel as nib
+# from nibabel import nifti1
+# from nibabel.viewers import OrthoSlicer3D
+ 
+# example_filename = "D:/python/CTSpine1K-20230410T033504Z-001/CTSpine1K/completed_annotation_verse/verse074_seg.nii.gz"
+ 
+# img = nib.load(example_filename)
+# print (img)
+# print (img.header['db_name'])   # 輸出頭信息
+ 
+# width,height,queue=img.dataobj.shape
+ 
+# OrthoSlicer3D(img.dataobj).show()
+ 
+# num = 1
+# for i in range(0,queue,10):
+ 
+#     img_arr = img.dataobj[:,:,i]
+#     plt.subplot(5,4,num)
+#     plt.imshow(img_arr,cmap='gray')
+#     num +=1
+ 
+# plt.show()
+
+
+
+# ### 開啟.raw檔
+# import rawpy
+# import imageio
+
+# path = "C:/Users/danie/Downloads/Dataset15/trainingData/case1.raw"
+# with rawpy.imread(path) as raw:
+#     rgb = raw.postprocess()
+# imageio.imsave('default.tiff', rgb)
+
+
+# ### tensor to list
+# a = torch.randn(3, 3, 3)
+# print(a)
+# tmp = a[0, :, :].tolist()
+# print(tmp)
+
+
+### 
+# from munch import Munch
+# test_dict = Munch.fromDict({})
+# test_dict.is_training = True
+# test_dict = Munch.toDict(test_dict)
+# print(test_dict)
+
+
+###
+# import argparse
+# parser = argparse.ArgumentParser(description='TMI experiments')  # 創建
+# args = parser.parse_args()
+# args.seed = 42
+# print(args.seed, type(args))
+
+
+###
+a = Tensor([1, 2, 3])
+a = torch.stack([a, a, a])
+print(a)
+
+a = torch.tensor([[1]])
+a = torch.cat((a, a), 1)
+print(a)
+
+a = [1, 2]
+a.append(3)
+print(a)
