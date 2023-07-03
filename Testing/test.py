@@ -290,13 +290,6 @@ from torch import Tensor
 # imageio.imsave('default.tiff', rgb)
 
 
-# ### tensor to list
-# a = torch.randn(3, 3, 3)
-# print(a)
-# tmp = a[0, :, :].tolist()
-# print(tmp)
-
-
 ### 
 # from munch import Munch
 # test_dict = Munch.fromDict({})
@@ -314,14 +307,31 @@ from torch import Tensor
 
 
 ###
-a = Tensor([1, 2, 3])
-a = torch.stack([a, a, a])
-print(a)
+# a = Tensor([1, 2, 3])
+# a = torch.stack([a, a, a])
+# print(a)
 
-a = torch.tensor([[1]])
-a = torch.cat((a, a), 1)
-print(a)
+# a = torch.tensor([[1]])
+# a = torch.cat((a, a), 1)
+# print(a)
 
-a = [1, 2]
-a.append(3)
-print(a)
+from torchvision import transforms
+transform = transforms.Normalize((5, 5, 5), (8, 8, 8))
+
+a = Tensor([
+[
+     [1, 2, 3],
+     [4, 5, 6],
+     [7, 8, 9]
+],[
+     [1, 2, 3],
+     [4, 5, 6],
+     [7, 8, 9]
+],[
+     [1, 2, 3],
+     [4, 5, 6],
+     [7, 8, 9]
+]])
+
+b = transform(a)
+print(b, a)

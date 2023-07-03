@@ -1,19 +1,23 @@
 import time
 import yaml
-
-import numpy as np
-import random
-import torch
-import torch.nn as nn
 import copy
+import random
+import numpy as np
 from munch import Munch
 
+import torch
+import torch.nn as nn
+from torchvision.io import read_image
+from torchvision import transforms
+
 from model.model import IKEM
-from misc.heatmap_maker import HeatmapMaker
-from misc.loss import LossManager
-from dataset import get_dataloader
+from tools.dataset import SpineDataset
+from tools.heatmap_maker import HeatmapMaker
+from tools.loss import LossManager
 
 
+FILE_PATH = ""
+IMAGE_ROOT = ""
 CONFIG_PATH = ".\config\config.yaml"
 CHECKPOINT_PATH = None
 
@@ -150,7 +154,6 @@ EPOCH = 1000
 BATCH_SIZE = 32
 LR = 1e-3
 
-
 def set_seed(seed):
     '''
     設置相同的隨機種子能確保每次執行結果一致。
@@ -164,11 +167,11 @@ def set_seed(seed):
     random.seed(seed)
     return
 
-def save_model(path, epoch, param, optimizer):
+def save_model(path:str, epoch:int, model:nn.Module, optimizer:torch.optim.Optimizer):
     save_dict = {
-        "model": param,
+        "model": model.state_dict(),
         "epoch": epoch,
-        "optimizer": optimizer
+        "optimizer": optimizer.state_dict()
     }
     torch.save(save_dict, path)
 
@@ -188,20 +191,49 @@ if __name__ == '__main__':
     print("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Load Model
+    # Dataset
+    train_transform = transforms.Compose([
+        transforms.ToPILImage(mode='L'),  # grayscale
+        transforms.Resize((512, 256)),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
+    ])
+    test_transform = transforms.Compose([
+        transforms.ToPILImage(mode='L'),  # grayscale
+        transforms.Resize((512, 256)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
+    ])
+    train_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
+    val_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="val")
+    test_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=test_transform, set="test")
+    train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_set, BATCH_SIZE, shuffle=True)
+
+    # Initialize
     print("Initialize model...")
     model = IKEM(config).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
+    heatmapMaker = HeatmapMaker(config)
+    lossManager = LossManager(use_coord_loss=True, heatmap_maker=heatmapMaker)
+
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
         checkpoint = torch.load(CHECKPOINT_PATH)
         model_param = checkpoint["model"]
         model.load_state_dict(model_param)
         try:
-            train_epoch = checkpoint["epoch"]
-            optimizer = checkpoint["optimizer"]
+            start_epoch = checkpoint["epoch"]
+            optimizer_param = checkpoint["optimizer"]
+            optimizer = torch.optim.Optimizer.load_state_dict(optimizer_param)
         except:
-            train_epoch = 0
+            start_epoch = 0
             optimizer = None
+        del model_param, optimizer_param, checkpoint
+    else:
+        start_epoch = 0
 
     # Calculate the number of model parameters
     n_params = 0
@@ -209,17 +241,33 @@ if __name__ == '__main__':
         n_params += v.reshape(-1).shape[0]  # v是一個tensor, reshape(-1)表示將v展平; shape[0]表示v展平後的元素個數
     print('Number of model parameters: {}'.format(n_params))
 
-    # Initialize
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
-    heatmapMaker = HeatmapMaker(config)
-    lossManager = LossManager(use_coord_loss=True, heatmap_maker=heatmapMaker)
-
     # Training
-    for epoch in range(1, EPOCH+1):
-        
+    for epoch in range(start_epoch, EPOCH+1):
+        print(">> training..")
         model.train()
-        for i, () 
+        for i, (inputs, labels) in enumerate(train_loader):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            outputs = model(inputs)
+            loss = lossManager(outputs, labels)
 
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            if i == 0:
+                print(f"Epoch：{epoch} | Loss：{round(loss.item(), 3)}")
+
+        print(">> validation..")
+        model.eval()
+        with torch.no_grad():
+            for i, (inputs, labels) in enumerate(val_loader):
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                outputs = model(inputs)
+                loss = lossManager(outputs, labels)
+
+        save_model("check_point.pth", epoch, model, optimizer)
 
 
     # Program Ended

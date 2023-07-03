@@ -1,30 +1,35 @@
 import os
 import copy
-from munch import Munch
-import numpy as np
 import json
+import numpy as np
+from munch import Munch
 
 import torch
 from torchvision.io import read_image
-import dataset.transforms as transforms
 
 class SpineDataset(torch.utils.data.Dataset):
-    def __init__(self, annotation_file_path:str, img_root:str, transform=None, mode:str="train"):
+    def __init__(self, data_file_path:str, img_root:str, transform=None, set:str="train"):
         """
         Args:
-            annotation_file_path: .json file has image paths and labels data.
+            data_file_path: .json file has image paths and labels data.
             img_root: the path of folder containing images.
             transform: transformation for this dataset.
-            mode: "train" or "val" or "test". Defaults to "train".
+            set: "train" or "val" or "test". Defaults to "train".
         """
         self.root = img_root
         self.transform = transform
-        with open(annotation_file_path) as f: self.data = json.load(f)
-        
-        
+        self.labels = []
+        self.inputs = []
+
+        with open(data_file_path) as f:
+            self.data = json.load(f)
+        for item in self.data:
+            if item["set"] == set:
+                self.labels.append(item["label"])
+                self.inputs.append(item["image_path"])
 
     def __len__(self):
-        return len(self.data)
+        return len(self.labels)
 
     def __getitem__(self, index):
         # indexing
