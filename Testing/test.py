@@ -315,23 +315,29 @@ from torch import Tensor
 # a = torch.cat((a, a), 1)
 # print(a)
 
+import cv2
+import math
+import numpy as np
 from torchvision import transforms
-transform = transforms.Normalize((5, 5, 5), (8, 8, 8))
+from torchvision.io.image import ImageReadMode
+from torchvision.io import read_image
 
-a = Tensor([
-[
-     [1, 2, 3],
-     [4, 5, 6],
-     [7, 8, 9]
-],[
-     [1, 2, 3],
-     [4, 5, 6],
-     [7, 8, 9]
-],[
-     [1, 2, 3],
-     [4, 5, 6],
-     [7, 8, 9]
-]])
+# train_transform = transforms.Compose([
+#      transforms.ToPILImage(),
+#      transforms.Resize((512, 256)),
+#      transforms.RandomHorizontalFlip(p=0.5),
+#      transforms.ToTensor()
+# ])
 
-b = transform(a)
-print(b, a)
+# a = read_image("Testing\\test_detect_output.png", mode=ImageReadMode.GRAY)
+# print(a.shape)
+
+# b = train_transform(a).numpy()
+# b *= 255
+# b.astype(np.int8)
+# b = np.transpose(b, (1, 2, 0))
+# cv2.imwrite("test.jpg", b)
+
+prob = np.array([math.pow(2, -i) for i in range(5)])
+prob = prob.tolist() / prob.sum()
+print(prob)

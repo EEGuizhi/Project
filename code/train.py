@@ -168,6 +168,7 @@ def set_seed(seed):
     return
 
 def save_model(path:str, epoch:int, model:nn.Module, optimizer:torch.optim.Optimizer):
+    print("Saving model..")
     save_dict = {
         "model": model.state_dict(),
         "epoch": epoch,
@@ -193,16 +194,16 @@ if __name__ == '__main__':
 
     # Dataset
     train_transform = transforms.Compose([
-        transforms.ToPILImage(mode='L'),  # grayscale
+        transforms.ToPILImage(),
         transforms.Resize((512, 256)),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.ToTensor(),
+        transforms.ToTensor(),  # 0 ~ 255 to -1 ~ 1
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
     ])
     test_transform = transforms.Compose([
-        transforms.ToPILImage(mode='L'),  # grayscale
+        transforms.ToPILImage(),
         transforms.Resize((512, 256)),
-        transforms.ToTensor(),
+        transforms.ToTensor(),  # 0 ~ 255 to -1 ~ 1
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
     ])
     train_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
@@ -243,9 +244,10 @@ if __name__ == '__main__':
 
     # Training
     for epoch in range(start_epoch, EPOCH+1):
-        print(">> training..")
+        print(f"\n>> Epoch:{epoch}")
         model.train()
-        for i, (inputs, labels) in enumerate(train_loader):
+        train_loss = 0
+        for i, (inputs, labels, hint_indexes) in enumerate(train_loader):
             inputs = inputs.to(device)
             labels = labels.to(device)
             outputs = model(inputs)
@@ -255,20 +257,22 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-            if i == 0:
-                print(f"Epoch：{epoch} | Loss：{round(loss.item(), 3)}")
+            train_loss += loss.item() / len(train_loader)
+        print(f"Training Loss：{round(train_loss, 3)}")
 
-        print(">> validation..")
         model.eval()
+        val_loss = 0
         with torch.no_grad():
-            for i, (inputs, labels) in enumerate(val_loader):
+            for i, (inputs, labels, hint_indexes) in enumerate(val_loader):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 outputs = model(inputs)
                 loss = lossManager(outputs, labels)
 
-        save_model("check_point.pth", epoch, model, optimizer)
+                val_loss += loss.item() / len(val_loader)
+        print(f"Validation Loss：{round(val_loss, 3)}")
 
+        save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
 
     # Program Ended
     print("\n>> End Program --- {} \n".format(time.time()))
