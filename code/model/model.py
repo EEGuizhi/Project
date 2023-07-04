@@ -66,9 +66,9 @@ class IGGNet(nn.Module):  # Interaction-Guided Gating Network (還在思考x的�
         self.SE_maxpool = SE_maxpool
         self.SE_softmax = SE_softmax
 
-    def forward(self, hint_heatmap:Tensor, feature_map:Tensor, x):
-        hint = F.interpolate(input=hint_heatmap, size=feature_map.size()[2:], mode="bilinear", align_corners=True)
-        f = torch.cat((x, hint), dim=1)
+    def forward(self, hint_heatmap:Tensor, Fh:Tensor, Fc:Tensor):
+        hint = F.interpolate(input=hint_heatmap, size=Fh.size()[2:], mode="bilinear", align_corners=True)
+        f = torch.cat((Fh, hint), dim=1)
         f = self.hintEncoder(f)
         if self.SE_maxpool:
             f = f.max(-1)[0].max(-1)[0]
@@ -81,10 +81,11 @@ class IGGNet(nn.Module):  # Interaction-Guided Gating Network (還在思考x的�
             f = f.softmax(1)
         else:
             f = f.sigmoid()
+        
         return f
 
 class HintFusionLayer(nn.Module):
-    def __init__(self, im_ch:int, in_ch:int, out_ch=64, ScaleLayer=True):
+    def __init__(self, im_ch:int, in_ch:int, out_ch:int=64, ScaleLayer:bool=True):
         """
         im_ch: Num of input image's channels
         in_ch: Num of "hintmap_encoder's input channels", equals to keypoints*2
@@ -113,7 +114,7 @@ class HintFusionLayer(nn.Module):
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True)
         )
-        
+
     def forward(self, input_image:Tensor, hint_heatmap:Tensor, prev_heatmap:Tensor):
         f = torch.cat((hint_heatmap, prev_heatmap))
         f = self.hintmap_encoder(f)
@@ -122,21 +123,22 @@ class HintFusionLayer(nn.Module):
             f = f * scale
         f = f + self.image_encoder(input_image)
         f = self.last_encoder(f)
-        return f        
+        return f
 
 
 class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
     def __init__(self, cfg):  # 假設傳入的config會是config.MODEL
         super(IKEM, self).__init__()
-        
+
         # Hint Fusion Layer
         self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_SIZE[0], cfg.NUM_KEYPOINTS*2, cfg.HintFusionLayer.out_channel)
-        
+
         # 引入 HRNet
         self.hrnet = HighResolutionNet()
-        
+
         # 引入 Interaction-Guided Gating Network
-        self.ignet = IGGNet()
+        self.iggnet = IGGNet()
         
-    def forward(self, x):
-        pass
+    def forward(self, hint_heatmap:Tensor, prev_heatmap:Tensor, input_image:Tensor):
+        feature_map = self.hint_fusion_layer(input_image, hint_heatmap, prev_heatmap)
+        

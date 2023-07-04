@@ -333,11 +333,19 @@ from torchvision.io import read_image
 # print(a.shape)
 
 # b = train_transform(a).numpy()
+# print(b.shape)
 # b *= 255
 # b.astype(np.int8)
 # b = np.transpose(b, (1, 2, 0))
 # cv2.imwrite("test.jpg", b)
 
-prob = np.array([math.pow(2, -i) for i in range(5)])
-prob = prob.tolist() / prob.sum()
-print(prob)
+# prob = np.array([math.pow(2, -i) for i in range(5)])
+# prob = prob.tolist() / prob.sum()
+# print(prob)
+
+a = torch.rand(2, 3, 3)
+print(a)
+
+b = torch.stack([a, a, a])
+print(b)
+print(a.shape, b.shape)
