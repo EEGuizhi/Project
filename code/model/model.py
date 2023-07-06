@@ -57,7 +57,7 @@ class ConvBlocks(nn.Module):
     def forward(self, x):
         return self.convs(x)
 
-class IGGNet(nn.Module):  # Interaction-Guided Gating Network (還在思考x的部分)
+class IGGNet(nn.Module):  # Interaction-Guided Gating Network (Fc另外寫)
     def __init__(self, in_ch, mid_ch1, out_ch, num_classes, SE_maxpool=False, SE_softmax=False, input_channel=256):
         super(IGGNet, self).__init__()
         self.hintEncoder = ConvBlocks(input_channel+num_classes, [256, 256, 256], [3, 3, 3], [2, 1, 1])
@@ -81,8 +81,8 @@ class IGGNet(nn.Module):  # Interaction-Guided Gating Network (還在思考x的�
             f = f.softmax(1)
         else:
             f = f.sigmoid()
-        
-        return f
+        f = f * Fc
+        return f    
 
 class HintFusionLayer(nn.Module):
     def __init__(self, im_ch:int, in_ch:int, out_ch:int=64, ScaleLayer:bool=True):
@@ -141,4 +141,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         
     def forward(self, hint_heatmap:Tensor, prev_heatmap:Tensor, input_image:Tensor):
         feature_map = self.hint_fusion_layer(input_image, hint_heatmap, prev_heatmap)
+        downsampled_feature_map, intermediate_feature_map = self.hrnet(feature_map)  #Fh以及Fc
+        out_heatmap = self.IGGNet(hint_heatmap, downsampled_feature_map, intermediate_feature_map)
+        
         

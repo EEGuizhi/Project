@@ -463,23 +463,37 @@ class HighResolutionNet(nn.Module):
                 x_list.append(y_list[i])
         y_list = self.stage4(x_list)
 
-        # Classification Head
-        y = self.incre_modules[0](y_list[0])
-        for i in range(len(self.downsamp_modules)):
-            y = self.incre_modules[i+1](y_list[i+1]) + \
-                        self.downsamp_modules[i](y)
+        # # Classification Head
+        # y = self.incre_modules[0](y_list[0])
+        # for i in range(len(self.downsamp_modules)):
+        #     y = self.incre_modules[i+1](y_list[i+1]) + \
+        #                 self.downsamp_modules[i](y)
 
-        y = self.final_layer(y)
+        # y = self.final_layer(y)
 
-        if torch._C._get_tracing_state():
-            y = y.flatten(start_dim=2).mean(dim=2)
-        else:
-            y = F.avg_pool2d(y, kernel_size=y.size()
-                                 [2:]).view(y.size(0), -1)
+        # if torch._C._get_tracing_state():
+        #     y = y.flatten(start_dim=2).mean(dim=2)
+        # else:
+        #     y = F.avg_pool2d(y, kernel_size=y.size()
+        #                          [2:]).view(y.size(0), -1)
 
-        y = self.classifier(y)
+        # y = self.classifier(y)
 
-        return y
+        out = self.aggregate_hrnet_features(y_list)
+
+        return x, out
+    
+    def aggregate_hrnet_features(self, x):
+        # Upsampling
+        x0_h, x0_w = x[0].size(2), x[0].size(3)
+        x1 = F.interpolate(x[1], size=(x0_h, x0_w),
+                           mode='bilinear', align_corners=self.align_corners)
+        x2 = F.interpolate(x[2], size=(x0_h, x0_w),
+                           mode='bilinear', align_corners=self.align_corners)
+        x3 = F.interpolate(x[3], size=(x0_h, x0_w),
+                           mode='bilinear', align_corners=self.align_corners)
+
+        return torch.cat([x[0], x1, x2, x3], 1)
 
     def init_weights(self, pretrained='',):
         logger.info('=> init weights from normal distribution')
