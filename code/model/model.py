@@ -141,7 +141,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         
     def forward(self, hint_heatmap:Tensor, prev_heatmap:Tensor, input_image:Tensor):
         feature_map = self.hint_fusion_layer(input_image, hint_heatmap, prev_heatmap)
-        downsampled_feature_map, intermediate_feature_map = self.hrnet(feature_map)  #Fh以及Fc
+        downsampled_feature_map, intermediate_feature_map = self.hrnet(feature_map)  # Fh以及Fc
         out_heatmap = self.IGGNet(hint_heatmap, downsampled_feature_map, intermediate_feature_map)
         
         
