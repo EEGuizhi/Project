@@ -81,8 +81,10 @@ class IGGNet(nn.Module):  # Interaction-Guided Gating Network (Fc另外寫)
             f = f.softmax(1)
         else:
             f = f.sigmoid()
-        f = f * Fc
-        return f    
+        if Fc is not None:
+            return f * Fc
+        else:
+            return f    
 
 class HintFusionLayer(nn.Module):
     def __init__(self, im_ch:int, in_ch:int, out_ch:int=64, ScaleLayer:bool=True):
