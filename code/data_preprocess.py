@@ -1,7 +1,6 @@
 import os
 import cv2
 import json
-import math
 import numpy as np
 import pandas as pd
 
@@ -20,7 +19,7 @@ def make_data(root:str, image_paths:str, label_coords:list, split:str):
     for idx in range(len(image_paths)):
         item = {
             "image_path": image_paths[idx],
-            "coners": label_coords[idx],
+            "corners": label_coords[idx],
             "centers": None,
             "col_raw_size": None,
             "set": split
@@ -59,12 +58,18 @@ if __name__ == "__main__":
     for idx in range(train_label_landmarks.shape[0]):
         keypoints = []
         for i in range(train_label_landmarks.shape[1]//2):
-            keypoints.append(train_label_landmarks[idx, i*2:i*2+2].tolist())
+            keypoints.append([
+                train_label_landmarks[idx, i],
+                train_label_landmarks[idx, train_label_landmarks.shape[1]//2 + i]
+            ])
         train_labels.append(keypoints)
     for idx in range(test_label_landmarks.shape[0]):
         keypoints = []
         for i in range(test_label_landmarks.shape[1]//2):
-            keypoints.append(test_label_landmarks[idx, i*2:i*2+2].tolist())
+            keypoints.append([
+                test_label_landmarks[idx, i],
+                test_label_landmarks[idx, test_label_landmarks.shape[1]//2 + i]
+            ])
         test_labels.append(keypoints)
     del train_image_filenames, test_image_filenames, train_label_landmarks, test_label_landmarks
 
