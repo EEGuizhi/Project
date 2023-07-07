@@ -21,7 +21,7 @@ def make_data(root:str, image_paths:str, label_coords:list, split:str):
             "image_path": image_paths[idx],
             "corners": label_coords[idx],
             "centers": None,
-            "col_raw_size": None,
+            "col_row_size": None,
             "set": split
         }
 
@@ -33,7 +33,7 @@ def make_data(root:str, image_paths:str, label_coords:list, split:str):
                 round(coords[i*4 : i*4 + 4, 0].mean(), 5),
                 round(coords[i*4 : i*4 + 4, 1].mean(), 5)
             ])
-        item["col_raw_size"] = img_size
+        item["col_row_size"] = img_size
         item["centers"] = centers
 
         data.append(item)
