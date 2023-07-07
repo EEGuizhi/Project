@@ -1,6 +1,7 @@
 import time
 import yaml
 import copy
+import math
 import random
 import numpy as np
 from munch import Munch
@@ -12,7 +13,8 @@ from torchvision import transforms
 from model.model import IKEM
 from tools.dataset import SpineDataset
 from tools.heatmap_maker import HeatmapMaker
-from tools.loss import LossManager
+from tools.loss import CustomLoss
+from tools.dataset import custom_collate_fn
 
 
 FILE_PATH = ""
@@ -21,10 +23,10 @@ CONFIG_PATH = ".\config\config.yaml"
 CHECKPOINT_PATH = None
 
 IMAGE_SIZE = (512, 256)
-NUM_KEYPOINTS = 17
+NUM_OF_KEYPOINTS = 17
 
 EPOCH = 1000
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 LR = 1e-3
 
 
@@ -83,16 +85,16 @@ if __name__ == '__main__':
     train_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
     val_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="val")
     test_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=test_transform, set="test")
-    train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_set, BATCH_SIZE, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
+    val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
+    test_loader = torch.utils.data.DataLoader(test_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
     # Initialize
     print("Initialize model...")
     model = IKEM(config).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(config)
-    lossManager = LossManager(use_coord_loss=True, heatmap_maker=heatmapMaker)
+    lossManager = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)
 
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
@@ -120,41 +122,40 @@ if __name__ == '__main__':
     for epoch in range(start_epoch, EPOCH+1):
         print(f"\n>> Epoch:{epoch}")
         model.train()
-        train_loss = 0
-        for i, (inputs, labels, hint_indexes) in enumerate(train_loader):
-            inputs = inputs.to(device)
+        train_1stpred_loss = 0
+        for i, (images, labels, hint_indexes) in enumerate(train_loader):
+            # Init
+            images = images.to(device)
             labels = labels.to(device)
+            labels_heatmap = heatmapMaker.coord2heatmap(labels)
+            hint_heatmap = torch.zeros(BATCH_SIZE, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1])
+            prev_pred = torch.zeros_like(hint_heatmap)
 
-            if hint_indexes is not None:
-                with torch.no_grad():
-                    model.eval()
-                    num_iters = np.random.randint(0, self.max_iter)
-                    pred_heatmap = torch.zeros_like(input_hint_heatmap)
-                    for click_indx in range(num_iters):
-                        # prediction
-                        pred_logit, aux_pred_logit = self.forward_model(input_image, input_hint_heatmap, pred_heatmap)
-                        pred_heatmap = pred_logit.sigmoid()
+            # Determine hint times of this batch during training
+            prob = np.array([math.pow(2, -i) for i in range(NUM_OF_KEYPOINTS)])
+            prob = prob.tolist() / prob.sum()
+            hint_times = np.random.choice(a=NUM_OF_KEYPOINTS, size=None, p=prob)
 
-                        # hint update (training 때는 hint를 줘가면서 update하는 과정을 거침)
-                        batch = self.get_next_points(batch, pred_heatmap)
-                        for i in range(batch.label.heatmap.shape[0]):
-                            if batch.hint.index[i] is not None:
-                                batch.hint.heatmap[i, batch.hint.index[i]] = batch.label.heatmap[i, batch.hint.index[i]]
-                    model.train()
-                outputs = model(inputs)
-            else:
-                hint_heatmap = torch.zeros(NUM_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1])
-                prev_pred = torch.zeros_like(hint_heatmap)
-                hint_heatmap
-                outputs = model(hint_heatmap, prev_pred, inputs)
+            # Simulate user interaction
+            for click in range(hint_times+1):
+                # Model forward
+                outputs = model(hint_heatmap, prev_pred, images)
 
-            loss = lossManager(outputs, labels)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                # Update Model
+                loss = lossManager(outputs, labels)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-            train_loss += loss.item() / len(train_loader)
-        print(f"Training Loss：{round(train_loss, 3)}")
+                # Inputs update
+                prev_pred = outputs
+                for s in range(hint_heatmap.shape[0]):  # s = idx of samples
+                    hint_heatmap[s, hint_indexes[s, click]] = labels_heatmap[s, hint_indexes[s, click]]
+
+                # Loss log
+                if click == 0:
+                    train_1stpred_loss += loss.item() / len(train_loader)
+        print(f"Training (first pred.) Loss：{round(train_1stpred_loss, 3)}")
 
         model.eval()
         val_loss = 0

@@ -343,9 +343,43 @@ from torchvision.io import read_image
 # prob = prob.tolist() / prob.sum()
 # print(prob)
 
-a = torch.rand(2, 3, 3)
-print(a)
+# import torch
+# import torch.nn as nn
 
-b = torch.stack([a, a, a])
-print(b)
-print(a.shape, b.shape)
+# class CustomLoss(nn.Module):
+#     def __init__(self):
+#         super(CustomLoss, self).__init__()
+#         self.base_loss_fn = nn.MSELoss()
+
+#     def forward(self, output, target):
+#         base_loss = self.base_loss_fn(output, target)
+#         print(">> Output in CustomLoss:", output)
+#         max_diff = torch.max(output) - torch.max(target)
+#         final_loss = base_loss + max_diff
+#         return final_loss
+
+# # 假设模型为一个简单的全连接网络
+# model = nn.Linear(in_features=5, out_features=1)
+# loss_fn = CustomLoss()
+
+# # 生成一个随机的批次数据
+# batch_size = 8
+# input_data = torch.randn(batch_size, 5)
+# target_data = torch.randn(batch_size, 1)
+
+# # 将输入数据传递给模型，获取模型的预测输出
+# output = model(input_data)
+
+# # 计算损失函数的值
+# loss = loss_fn(output, target_data)
+
+# # 打印损失值
+# print(input_data)
+# print(output)
+# print(target_data)
+# print("Batch Loss:", loss.item())
+
+a = np.array([1, 2, 3])
+print(a)
+print(list(a))
+print([a, a, a])
