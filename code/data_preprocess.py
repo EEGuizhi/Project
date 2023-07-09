@@ -9,7 +9,7 @@ import pandas as pd
 SOURCE_PATH = "D:/python/interactive_keypoint_estimation/code/data/dataset16/boostnet_labeldata"  # dataset路徑
 TARGET_PATH = "./code/dataset/"  # 存放路徑
 VALIDATION_SET_SIZE = 128
-FROM_CSVFILE = False  # read landmarks from landmarks.csv (讀出來的座標會是相對座標(百分比))
+FROM_CSVFILE = True  # read landmarks from landmarks.csv (讀出來的座標會是相對座標(百分比))
 
 
 def make_data(root:str, image_paths:str, label_coords:list, split:str):
