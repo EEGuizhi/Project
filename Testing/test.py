@@ -76,27 +76,6 @@ from torch import Tensor
 # print(next(it))
 
 
-### nn.Parameter test ###
-# class ScaleLayer(nn.Module):
-#     def __init__(self, init_value=1.0, lr_mult=1):
-#         super().__init__()
-#         self.lr_mult = lr_mult
-#         self.scale = nn.Parameter(
-#             torch.full((1,), init_value / lr_mult, dtype=torch.float32)
-#         )
-        
-#         # a = torch.tensor([3, 4], dtype=torch.float64)
-
-#     def forward(self, x):
-#         scale = torch.abs(self.scale * self.lr_mult)
-#         return x * scale
-
-# model = ScaleLayer()
-# model.state_dict()
-# for para in model.parameters():
-#     print(para)
-
-
 ### random select test ###
 # test_paths = ['dataset/img_A.jpg','dataset/img_B.jpg','dataset/img_C.jpg','dataset/img_D.jpg','dataset/img_E.jpg','dataset/img_F.jpg','dataset/img_G.jpg']
 # print("test_paths: {}".format(test_paths))
@@ -210,101 +189,6 @@ from torch import Tensor
 # print(">>", a[0, b])
 
 
-# ### nii file
-# import nibabel as nib
-# import matplotlib.pyplot as plt
-
-# # 載入NIfTI檔案
-# # nii_img = nib.load('D:/python/volume-covid19-A-0025_ct_seg.nii')
-# nii_img = nib.load('D:/GitHub/EEGuizhi/Project/new_example.nii')
-
-# # 取得影像數據
-# img_data = nii_img.get_fdata()
-
-# # 顯示影像
-# plt.imshow(img_data[:, :, 5], cmap='gray')
-# plt.show()
-
-
-# ### nii file 2
-# import nibabel as nib
-# import matplotlib.pyplot as plt
-
-# # 讀取NIfTI檔案
-# # nii_file = nib.load('D:/python/liver_96_seg.nii')
-# nii_file = nib.load("D:/python/CTSpine1K-20230410T033504Z-001/CTSpine1K/completed_annotation_verse/verse074_seg.nii.gz")
-# img_data = nii_file.get_fdata()
-
-# # 創建一個3x1的子圖畫板
-# fig, axes = plt.subplots(nrows=3, ncols=1)
-
-# # 在不同的子圖中顯示從不同軸向的切片
-# axes[0].imshow(img_data[:, :, img_data.shape[2]//2], cmap='gray')
-# axes[0].set_title('Axial plane')
-# axes[1].imshow(img_data[:, img_data.shape[1]//2, :], cmap='gray')
-# axes[1].set_title('Coronal plane')
-# axes[2].imshow(img_data[img_data.shape[0]//2, :, :], cmap='gray')
-# axes[2].set_title('Sagittal plane')
-
-# # 顯示子圖畫板
-# plt.show()
-
-# ### nii file 3
-# import matplotlib
-# matplotlib.use('TkAgg')
- 
-# from matplotlib import pylab as plt
-# import nibabel as nib
-# from nibabel import nifti1
-# from nibabel.viewers import OrthoSlicer3D
- 
-# example_filename = "D:/python/CTSpine1K-20230410T033504Z-001/CTSpine1K/completed_annotation_verse/verse074_seg.nii.gz"
- 
-# img = nib.load(example_filename)
-# print (img)
-# print (img.header['db_name'])   # 輸出頭信息
- 
-# width,height,queue=img.dataobj.shape
- 
-# OrthoSlicer3D(img.dataobj).show()
- 
-# num = 1
-# for i in range(0,queue,10):
- 
-#     img_arr = img.dataobj[:,:,i]
-#     plt.subplot(5,4,num)
-#     plt.imshow(img_arr,cmap='gray')
-#     num +=1
- 
-# plt.show()
-
-
-
-# ### 開啟.raw檔
-# import rawpy
-# import imageio
-
-# path = "C:/Users/danie/Downloads/Dataset15/trainingData/case1.raw"
-# with rawpy.imread(path) as raw:
-#     rgb = raw.postprocess()
-# imageio.imsave('default.tiff', rgb)
-
-
-### 
-# from munch import Munch
-# test_dict = Munch.fromDict({})
-# test_dict.is_training = True
-# test_dict = Munch.toDict(test_dict)
-# print(test_dict)
-
-
-###
-# import argparse
-# parser = argparse.ArgumentParser(description='TMI experiments')  # 創建
-# args = parser.parse_args()
-# args.seed = 42
-# print(args.seed, type(args))
-
 
 ###
 # a = Tensor([1, 2, 3])
@@ -315,12 +199,12 @@ from torch import Tensor
 # a = torch.cat((a, a), 1)
 # print(a)
 
-import cv2
-import math
-import numpy as np
-from torchvision import transforms
-from torchvision.io.image import ImageReadMode
-from torchvision.io import read_image
+# import cv2
+# import math
+# import numpy as np
+# from torchvision import transforms
+# from torchvision.io.image import ImageReadMode
+# from torchvision.io import read_image
 
 # train_transform = transforms.Compose([
 #      transforms.ToPILImage(),
@@ -379,13 +263,67 @@ from torchvision.io import read_image
 # print(target_data)
 # print("Batch Loss:", loss.item())
 
-a = np.array([1, 2, 3])
-print(a)
-print(list(a))
-print([a, a, a])
+# a = np.array([1, 2, 3])
+# print(a)
+# print(list(a))
+# print([a, a, a])
 
-a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-remove_idx = [1, 3, 5]
-for i, idx in enumerate(remove_idx):
-    del a[idx-i]
-print(a)
+# a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+# remove_idx = [1, 3, 5]
+# for i, idx in enumerate(remove_idx):
+#     del a[idx-i]
+# print(a)
+
+
+### nn.Parameter test ###
+class ScaleLayer(nn.Module):
+    def __init__(self, init_value=1.0, lr_mult=1):
+        super(ScaleLayer, self).__init__()
+        self.lr_mult = lr_mult
+        self.scale = nn.Parameter(
+            torch.full((1,), init_value / lr_mult, dtype=torch.float32)
+        )
+
+    def forward(self, x):
+        scale = torch.abs(self.scale * self.lr_mult)
+        return x * scale
+
+
+class TopModel(nn.Module):
+    def __init__(self, im_ch, out_ch):
+        super(TopModel, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(in_channels=im_ch, out_channels=out_ch, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True)
+        )
+        self.bn1 = nn.BatchNorm2d(out_ch)
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(in_channels=im_ch, out_channels=out_ch, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.ReLU(inplace=True)
+        )
+        self.conv = nn.Conv2d(3, 3, 3, 1, 1)
+        self.scale_layer = ScaleLayer()
+
+    def forward(self, x):
+        x = self.scale_layer(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.conv(x)
+        return x
+
+
+model = TopModel(im_ch=3, out_ch=3)
+model_dict = model.state_dict()
+print(list(model_dict.keys()))
+
+print("===")
+model_dict = torch.load("D:\python\interactive_keypoint_estimation\code\pretrained_models\hrnetv2_w32_imagenet_pretrained.pth")
+for key in list(model_dict.keys()):
+    if "conv2" in key:
+        print(key)
+print(list(model_dict.keys())[-5:-1])
+
+# print("===")
+# model_dict = torch.load("D:\python\interactive_keypoint_estimation\save\ExpNum[00001]_Dataset[dataset16]_Model[RITM_SE_HRNet32]_config[spineweb_ours]_seed[42]\model.pth")
+# print(list(model_dict["model"].keys()))

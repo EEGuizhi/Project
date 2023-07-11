@@ -17,9 +17,9 @@ from tools.loss import CustomLoss
 from tools.dataset import custom_collate_fn
 
 
-FILE_PATH = ""
+FILE_PATH = "code/dataset/all_data.json"
 IMAGE_ROOT = ""
-CONFIG_PATH = ".\config\config.yaml"
+CONFIG_PATH = "./config/config.yaml"
 CHECKPOINT_PATH = None
 
 IMAGE_SIZE = (512, 256)
@@ -76,18 +76,10 @@ if __name__ == '__main__':
         transforms.ToTensor(),  # 0 ~ 255 to -1 ~ 1
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
     ])
-    test_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize(IMAGE_SIZE),
-        transforms.ToTensor(),  # 0 ~ 255 to -1 ~ 1
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
-    ])
     train_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
     val_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="val")
-    test_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=test_transform, set="test")
     train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
     val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
-    test_loader = torch.utils.data.DataLoader(test_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
     # Initialize
     print("Initialize model...")
