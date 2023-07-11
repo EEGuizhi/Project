@@ -1,49 +1,44 @@
 # NCHUEE大學專題  組員: 陳柏翔 陳沛昀
+import os
 import torch
-import numpy
+import numpy as np
 from torch import nn
 from torch import Tensor
 import torch.nn.functional as F
 
 from hrnet import HighResolutionNet
-
-# class ScaleLayer(nn.Module):  # from https://github.com/seharanul17/interactive_keypoint_estimation/blob/8a6f28df6da5728dcf99827333f7f7620fda28b8/model/iterativeRefinementModels/RITM_SE_HRNet32.py#L132
-#     def __init__(self, init_value=1.0, lr_mult=1):
-#         super().__init__()
-#         self.lr_mult = lr_mult
-#         self.scale = nn.Parameter(
-#             torch.full((1,), init_value / lr_mult, dtype=torch.float32)
-#         )
-
-#     def forward(self, x):
-#         scale = torch.abs(self.scale * self.lr_mult)
-#         return x * scale
+# from ocr import
 
 
 class ConvBlocks(nn.Module):
-    def __init__(self, in_ch, channels, kernel_sizes=None, strides=None, dilations=None, paddings=None,
-                 BatchNorm=nn.BatchNorm2d):
+    def __init__(self, in_ch, channels, kernel_sizes=None, strides=None, dilations=None, paddings=None, BatchNorm=nn.BatchNorm2d):
         super(ConvBlocks, self).__init__()
         self.num = len(channels)
         if kernel_sizes is None: kernel_sizes = [3 for c in channels]
         if strides is None: strides = [1 for c in channels]
         if dilations is None: dilations = [1 for c in channels]
-        if paddings is None: paddings = [
-            ((kernel_sizes[i] // 2) if dilations[i] == 1 else (kernel_sizes[i] // 2 * dilations[i])) for i in
-            range(self.num)]
+        if paddings is None:
+            paddings = [
+                ((kernel_sizes[i] // 2) if dilations[i] == 1 else (kernel_sizes[i] // 2 * dilations[i])) for i in range(self.num)
+            ]
         convs_tmp = []
         for i in range(self.num):
             if channels[i] == 1:
-                convs_tmp.append(nn.Conv2d(
-                    in_ch if i == 0 else channels[i - 1], channels[i], kernel_size=kernel_sizes[i],
-                    stride=strides[i], padding=paddings[i], dilation=dilations[i])
+                convs_tmp.append(
+                    nn.Conv2d(
+                        in_ch if i == 0 else channels[i - 1], channels[i], kernel_size=kernel_sizes[i],
+                        stride=strides[i], padding=paddings[i], dilation=dilations[i]
+                    )
                 )
             else:
                 convs_tmp.append(nn.Sequential(
-                    nn.Conv2d(in_ch if i == 0 else channels[i - 1], channels[i], kernel_size=kernel_sizes[i],
-                              stride=strides[i], padding=paddings[i], dilation=dilations[i], bias=False),
-                    BatchNorm(channels[i]), nn.ReLU())
-                )
+                    nn.Conv2d(
+                        in_ch if i == 0 else channels[i - 1], channels[i], kernel_size=kernel_sizes[i],
+                        stride=strides[i], padding=paddings[i], dilation=dilations[i], bias=False
+                    ),
+                    BatchNorm(channels[i]),
+                    nn.ReLU()
+                ))
         self.convs = nn.Sequential(*convs_tmp)
 
         # weight initialization
@@ -58,11 +53,11 @@ class ConvBlocks(nn.Module):
         return self.convs(x)
 
 class IGGNet(nn.Module):  # Interaction-Guided Gating Network (Fc另外寫)
-    def __init__(self, in_ch, mid_ch1, out_ch, num_classes, SE_maxpool=False, SE_softmax=False, input_channel=256):
+    def __init__(self, in_ch, out_ch, num_classes, SE_maxpool=True, SE_softmax=False):
         super(IGGNet, self).__init__()
-        self.hintEncoder = ConvBlocks(input_channel+num_classes, [256, 256, 256], [3, 3, 3], [2, 1, 1])
-        self.conv1 = nn.Conv2d(in_ch, mid_ch1, kernel_size=(1, 1))
-        self.conv2 = nn.Conv2d(mid_ch1, out_ch, kernel_size=(1, 1))
+        self.hintEncoder = ConvBlocks(in_ch+num_classes, [256, 256, 256], [3, 3, 3], [2, 1, 1])
+        self.conv1 = nn.Conv2d(256, 16, kernel_size=(1, 1))  # SE_Block
+        self.conv2 = nn.Conv2d(16, out_ch, kernel_size=(1, 1))
         self.SE_maxpool = SE_maxpool
         self.SE_softmax = SE_softmax
 
@@ -129,21 +124,41 @@ class HintFusionLayer(nn.Module):
 
 
 class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
-    def __init__(self, cfg):  # 假設傳入的config會是config.MODEL
+    def __init__(self, cfg, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
         super(IKEM, self).__init__()
 
         # Hint Fusion Layer
         self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_SIZE[0], cfg.NUM_KEYPOINTS*2, cfg.HintFusionLayer.out_channel)
 
-        # 引入 HRNet
+        # High Resolution Network
         self.hrnet = HighResolutionNet()
 
-        # 引入 Interaction-Guided Gating Network
-        self.iggnet = IGGNet()
+        # Interaction-Guided Gating Network
+        last_inp_channels = self.hrnet.last_inp_channels
+        self.iggnet = IGGNet(in_ch=256, out_ch=last_inp_channels, num_classes=cfg.NUM_KEYPOINTS, SE_maxpool=True, SE_softmax=False)
+
+        # Object-Contextual Representations
         
+
+        # Load pretrained model param
+        if pretrained_model_path is not None:
+            model_dict = self.state_dict()
+            if not os.path.exists(pretrained_model_path):
+                print("Error: Pretrained model file path does not exist.")
+                exit(1)
+            pretrained_dict = torch.load(pretrained_model_path)
+            for key in list(pretrained_dict.keys()):
+                if key[0:5] == "conv1": pretrained_dict[key.replace("conv1", "hint_fusion_layer.image_encoder.0")] = pretrained_dict.pop(key)
+                elif key[0:5] == "conv2": pretrained_dict[key.replace("conv2", "hint_fusion_layer.last_encoder.0")] = pretrained_dict.pop(key)
+                elif key[0:3] == "bn1": pretrained_dict[key.replace("bn1", "hint_fusion_layer.image_encoder.1")] = pretrained_dict.pop(key)
+                elif key[0:3] == "bn2": pretrained_dict[key.replace("bn2", "hint_fusion_layer.last_encoder.1")] = pretrained_dict.pop(key)
+                else: pretrained_dict["hrnet."+key] = pretrained_dict.pop(key)
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
+            model_dict.update(pretrained_dict)
+            self.load_state_dict(model_dict, strict=False)
+
     def forward(self, hint_heatmap:Tensor, prev_heatmap:Tensor, input_image:Tensor):
         feature_map = self.hint_fusion_layer(input_image, hint_heatmap, prev_heatmap)
-        downsampled_feature_map, intermediate_feature_map = self.hrnet(feature_map)  # Fh以及Fc
-        out_heatmap = self.IGGNet(hint_heatmap, downsampled_feature_map, intermediate_feature_map)
-        
+        Fh, Fc = self.hrnet(feature_map)  # Fh以及Fc
+        feature_map = self.iggnet(hint_heatmap, Fh, Fc)
         

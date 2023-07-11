@@ -102,58 +102,58 @@ class HeatmapMaker():
         final_coord = hard_coord + soft_patch_offset - patch_size//2
         return final_coord
 
-    def get_morph(self, points):
-        # normalize
-        points = self.points_normalize(points, dim0=self.image_size[0], dim1=self.image_size[1])
+    # def get_morph(self, points):
+    #     # normalize
+    #     points = self.points_normalize(points, dim0=self.image_size[0], dim1=self.image_size[1])
 
-        dist_pairs = torch.tensor(self.morph_pairs[0])
-        vec_pairs = torch.tensor(self.morph_pairs[1])
+    #     dist_pairs = torch.tensor(self.morph_pairs[0])
+    #     vec_pairs = torch.tensor(self.morph_pairs[1])
 
-        # dist
-        # batch, 13, 2
-        from_vec = points[:, dist_pairs[:, 0]]
-        to_vec = points[:, dist_pairs[:, 1]]
-        diffs = to_vec - from_vec
-        pred_dist = torch.norm(diffs, dim = -1).unsqueeze(-1) # (batch, 16,1)
+    #     # dist
+    #     # batch, 13, 2
+    #     from_vec = points[:, dist_pairs[:, 0]]
+    #     to_vec = points[:, dist_pairs[:, 1]]
+    #     diffs = to_vec - from_vec
+    #     pred_dist = torch.norm(diffs, dim = -1).unsqueeze(-1) # (batch, 16,1)
 
-        # unit_vec_pairs
-        if self.config.Morph.threePointAngle:
-            # batch, 13, 2
-            x = points[:, vec_pairs[:, 0]]
-            y = points[:, vec_pairs[:, 1]]
-            z = points[:, vec_pairs[:, 2]]
-            pred_angle = self.get_angle(x,y,z)
-        else:
-            from_vec = points[:, vec_pairs[:, 0]]
-            to_vec = points[:, vec_pairs[:, 1]]
-            diffs = to_vec - from_vec
-            pred_angle = diffs
+    #     # unit_vec_pairs
+    #     if self.config.Morph.threePointAngle:
+    #         # batch, 13, 2
+    #         x = points[:, vec_pairs[:, 0]]
+    #         y = points[:, vec_pairs[:, 1]]
+    #         z = points[:, vec_pairs[:, 2]]
+    #         pred_angle = self.get_angle(x,y,z)
+    #     else:
+    #         from_vec = points[:, vec_pairs[:, 0]]
+    #         to_vec = points[:, vec_pairs[:, 1]]
+    #         diffs = to_vec - from_vec
+    #         pred_angle = diffs
 
-        return pred_dist, pred_angle
+    #     return pred_dist, pred_angle
 
-    def get_angle(self, x, y, z):
-        # y가 꼭짓점임. z-y-x
-        N = x.shape[0] * x.shape[1]
-        delta_vector_1 = torch.reshape(x - y, (N, 2))  # batch*16, 2
-        delta_vector_2 = torch.reshape(z - y, (N, 2))
+    # def get_angle(self, x, y, z):
+    #     # y가 꼭짓점임. z-y-x
+    #     N = x.shape[0] * x.shape[1]
+    #     delta_vector_1 = torch.reshape(x - y, (N, 2))  # batch*16, 2
+    #     delta_vector_2 = torch.reshape(z - y, (N, 2))
 
-        # (y,x) = (row, col)
-        angle_1 = torch.atan2(delta_vector_1[:, 0], delta_vector_1[:, 1] + 1e-8)
-        angle_2 = torch.atan2(delta_vector_2[:, 0], delta_vector_2[:, 1] + 1e-8)
+    #     # (y,x) = (row, col)
+    #     angle_1 = torch.atan2(delta_vector_1[:, 0], delta_vector_1[:, 1] + 1e-8)
+    #     angle_2 = torch.atan2(delta_vector_2[:, 0], delta_vector_2[:, 1] + 1e-8)
 
-        delta_angle = angle_2 - angle_1
+    #     delta_angle = angle_2 - angle_1
 
-        angle_vector = torch.stack((torch.cos(delta_angle), torch.sin(delta_angle)), -1)
+    #     angle_vector = torch.stack((torch.cos(delta_angle), torch.sin(delta_angle)), -1)
 
-        angle_vector = torch.reshape(angle_vector, (x.shape[0], x.shape[1], 2))
-        return angle_vector
+    #     angle_vector = torch.reshape(angle_vector, (x.shape[0], x.shape[1], 2))
+    #     return angle_vector
 
-    def points_normalize(self, points, dim0, dim1):
-        new_coord = torch.zeros_like(points)
-        new_coord[..., 0] = points[..., 0] / dim0
-        new_coord[..., 1] = points[..., 1] / dim1
+    # def points_normalize(self, points, dim0, dim1):
+    #     new_coord = torch.zeros_like(points)
+    #     new_coord[..., 0] = points[..., 0] / dim0
+    #     new_coord[..., 1] = points[..., 1] / dim1
 
-        return new_coord
+    #     return new_coord
 
 def heatmap2hargmax_coord(heatmap):
     b, c, row, column = heatmap.shape
@@ -164,4 +164,3 @@ def heatmap2hargmax_coord(heatmap):
     keypoint[:, :, 0] = torch.div(max_indices, column, rounding_mode='floor')
     keypoint[:, :, 1] = max_indices % column
     return keypoint
-

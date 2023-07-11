@@ -1,20 +1,21 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from munch import Munch
+from heatmap_maker import HeatmapMaker
 
-class LossManager():
-    def __init__(self, use_coord_loss, heatmap_maker):
+class CustomLoss(nn.Module):
+    def __init__(self, use_coord_loss, heatmap_maker=HeatmapMaker):
+        super(CustomLoss, self).__init__()
         self.use_coord_loss = use_coord_loss
         self.heatmap_maker = heatmap_maker
         self.mae_criterion = nn.L1Loss()
         self.bce_loss = nn.BCELoss()
 
-    def __call__(self, pred_heatmap, label):
-        loss, pred_heatmap = self.get_heatmap_loss(pred_heatmap=pred_heatmap, label_heatmap=label.heatmap)
+    def forward(self, pred_heatmap, label):
+        label_heatmap = None  # label(coord) to label(heatmap) 待完成
+        loss, pred_heatmap = self.get_heatmap_loss(pred_heatmap=pred_heatmap, label_heatmap=label_heatmap)
         pred_coord = self.heatmap_maker.get_heatmap2sargmax_coord(pred_heatmap=pred_heatmap)
         if self.use_coord_loss:
-            coord_loss = self.mae_criterion(pred_coord, label.coord)
+            coord_loss = self.mae_criterion(pred_coord, label)
             loss += 0.01*coord_loss
         return loss
 

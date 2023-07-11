@@ -1,26 +1,28 @@
 import os
 import json
-import math
 import numpy as np
 
 import torch
 from torchvision.io import read_image
 from torchvision.io.image import ImageReadMode
 
+from train import NUM_OF_KEYPOINTS
+
+
 class SpineDataset(torch.utils.data.Dataset):
     def __init__(self, data_file_path:str, img_root:str, transform=None, set:str="train"):
         """
-        Args:
+        Parameters:
         ===
             data_file_path: .json file has image paths and labels data.
             img_root: the path of folder containing images.
             transform: transformation for this dataset.
             set: "train" or "val" or "test". Defaults to "train".
         """
+        self.labels = []
+        self.images = []
         self.root = img_root
         self.transform = transform
-        self.labels = []
-        self.imgs = []
         self.set = set
 
         with open(data_file_path) as f:
@@ -28,29 +30,31 @@ class SpineDataset(torch.utils.data.Dataset):
         for item in self.data:
             if item["set"] == set:
                 self.labels.append(item["label"])
-                self.imgs.append(os.path.join(img_root, item["image_path"]))
+                self.images.append(os.path.join(img_root, item["image_path"]))
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, index):
         # label (ground truth)
-        label = self.labels[index]
-        num_of_keypoints = len(label)
+        label = torch.Tensor(self.labels[index])
 
         # image (input)
-        img_path = self.imgs[index]
+        img_path = self.images[index]
         image = read_image(img_path, mode=ImageReadMode.GRAY)
         if self.transform is not None:
             image = self.transform(image)
 
-        # generate random hint indexes
-        prob = np.array([math.pow(2, -i) for i in range(num_of_keypoints)])
-        prob = prob.tolist() / prob.sum()
-        if self.set == "train":
-            hint_times = np.random.choice(a=num_of_keypoints, size=None, p=prob)  # 決定總共提示次數
-            hint_indexes = np.random.choice(a=num_of_keypoints, size=hint_times, replace=False)  # 決定每次提示的為哪個關鍵點(不會重複)
-        else:
-            hint_indexes = None
+        # generate random hint index
+        hint_indexes = torch.from_numpy(
+            np.random.choice(a=NUM_OF_KEYPOINTS, size=NUM_OF_KEYPOINTS, replace=False)  # (不會重複)
+        )
 
         return image, label, hint_indexes
+
+def custom_collate_fn(samples):
+    # 承接__getitem__()的東西 打包成batch
+    images = torch.stack([s[0] for s in samples])
+    labels = torch.stack([s[1] for s in samples])
+    hint_indexes = torch.stack([s[2] for s in samples])
+    return images, labels, hint_indexes
