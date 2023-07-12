@@ -131,7 +131,7 @@ if __name__ == '__main__':
             # Simulate user interaction
             for click in range(hint_times+1):
                 # Model forward
-                outputs = model(hint_heatmap, prev_pred, images)
+                outputs, aux_out = model(hint_heatmap, prev_pred, images)
 
                 # Update Model
                 loss = lossManager(outputs, labels)
@@ -155,7 +155,7 @@ if __name__ == '__main__':
             for i, (inputs, labels, hint_indexes) in enumerate(val_loader):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-                outputs = model(inputs)
+                outputs, aux_out = model(inputs)
                 loss = lossManager(outputs, labels)
 
                 val_loss += loss.item() / len(val_loader)

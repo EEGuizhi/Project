@@ -126,6 +126,7 @@ class HintFusionLayer(nn.Module):
 class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
     def __init__(self, cfg, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
         super(IKEM, self).__init__()
+        self.image_size = cfg.IMAGE_SIZE
         ocr_width = 128
 
         # Hint Fusion Layer
@@ -195,4 +196,8 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         context = self.ocr_gather_head(feature_map, out_aux)  # context :  batch x c x num_keypoint x 1, feature_map: batch, c, H, W
         feature_map = self.ocr_distri_head(feature_map, context)
         out = self.cls_head(feature_map)
-        return [out, out_aux]
+
+        pred_logit = F.interpolate(pred_logit, size=self.image_size, mode='bilinear', align_corners=True)
+        aux_pred_logit = F.interpolate(aux_pred_logit, size=self.image_size, mode='bilinear', align_corners=True)
+
+        return pred_logit, aux_pred_logit
