@@ -232,7 +232,7 @@ class HighResolutionModule(nn.Module):
 
 
 class HighResolutionNet(nn.Module):
-    def __init__(self, width, num_classes, ocr_width=256, small=False, norm_layer=nn.BatchNorm2d, align_corners=True):
+    def __init__(self, width, ocr_width=256, small=False, norm_layer=nn.BatchNorm2d, align_corners=True):
         super(HighResolutionNet, self).__init__()
 
         self.norm_layer = norm_layer
