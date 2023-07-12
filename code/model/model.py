@@ -129,10 +129,10 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         ocr_width = 128
 
         # Hint Fusion Layer
-        self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_SIZE[0], cfg.NUM_KEYPOINTS*2, cfg.HintFusionLayer.out_channel)
+        self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_SIZE[0], cfg.NUM_KEYPOINTS*2)
 
         # High Resolution Network
-        self.hrnet = HighResolutionNet()
+        self.hrnet = HighResolutionNet(width=32, num_classes=cfg.NUM_KEYPOINTS, ocr_width=128, small=False)
 
         # Interaction-Guided Gating Network
         last_inp_channels = self.hrnet.last_inp_channels
@@ -166,7 +166,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
             nn.ReLU(inplace=True),
             nn.Conv2d(last_inp_channels, cfg.NUM_KEYPOINTS, kernel_size=1, stride=1, padding=0, bias=True)
         )
-        
+
     # Load pretrained model param
         if pretrained_model_path is not None:
             model_dict = self.state_dict()
@@ -188,11 +188,11 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         feature_map = self.hint_fusion_layer(input_image, hint_heatmap, prev_heatmap)
         Fh, Fc = self.hrnet(feature_map)  # Fh以及Fc
         feature_map = self.iggnet(hint_heatmap, Fh, Fc)
-        
-        out_aux = self.aux_head(feature_map) # aux_head : conv norm relu conv (soft object regions), output channel: num_classes
-        feature_map = self.conv3x3_ocr(feature_map) # conv3x3_ocr : conv norm relu (pixel representation
 
-        context = self.ocr_gather_head(feature_map, out_aux) # context :  batch x c x num_keypoint x 1, feature_map: batch, c, H, W
+        out_aux = self.aux_head(feature_map)  # aux_head : conv norm relu conv (soft object regions), output channel: num_classes
+        feature_map = self.conv3x3_ocr(feature_map)  # conv3x3_ocr : conv norm relu (pixel representation
+
+        context = self.ocr_gather_head(feature_map, out_aux)  # context :  batch x c x num_keypoint x 1, feature_map: batch, c, H, W
         feature_map = self.ocr_distri_head(feature_map, context)
         out = self.cls_head(feature_map)
         return [out, out_aux]

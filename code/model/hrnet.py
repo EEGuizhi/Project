@@ -240,12 +240,6 @@ class HighResolutionNet(nn.Module):
         self.ocr_width = ocr_width
         self.align_corners = align_corners
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False)
-        self.bn1 = norm_layer(64)
-        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1, bias=False)
-        self.bn2 = norm_layer(64)
-        self.relu = nn.ReLU(inplace=relu_inplace)
-
         num_blocks = 2 if small else 4
 
         stage1_num_channels = 64
@@ -285,34 +279,6 @@ class HighResolutionNet(nn.Module):
             num_blocks=4 * [num_blocks], num_channels=num_channels)
 
         last_inp_channels = np.int(np.sum(pre_stage_channels))
-        if self.ocr_width > 0:
-            ocr_mid_channels = 2 * self.ocr_width
-            ocr_key_channels = self.ocr_width
-
-            self.conv3x3_ocr = nn.Sequential(
-                nn.Conv2d(last_inp_channels, ocr_mid_channels,
-                          kernel_size=3, stride=1, padding=1),
-                norm_layer(ocr_mid_channels),
-                nn.ReLU(inplace=relu_inplace),
-            )
-            self.ocr_gather_head = SpatialGather_Module(num_classes)
-
-            self.ocr_distri_head = SpatialOCR_Module(
-                in_channels=ocr_mid_channels,
-                key_channels=ocr_key_channels,
-                out_channels=ocr_mid_channels,
-                scale=1,
-                dropout=0.05,
-                norm_layer=norm_layer,
-                align_corners=align_corners
-            )
-            self.cls_head = nn.Conv2d(ocr_mid_channels, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
-            self.aux_head = nn.Sequential(
-                nn.Conv2d(last_inp_channels, last_inp_channels, kernel_size=1, stride=1, padding=0),
-                norm_layer(last_inp_channels),
-                nn.ReLU(inplace=relu_inplace),
-                nn.Conv2d(last_inp_channels, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
-            )
         self.last_inp_channels = last_inp_channels
 
 
@@ -381,21 +347,23 @@ class HighResolutionNet(nn.Module):
             else:
                 reset_multi_scale_output = True
             modules.append(
-                HighResolutionModule(num_branches,
-                                     block,
-                                     num_blocks,
-                                     num_inchannels,
-                                     num_channels,
-                                     fuse_method,
-                                     reset_multi_scale_output,
-                                     norm_layer=self.norm_layer,
-                                     align_corners=self.align_corners)
+                HighResolutionModule(
+                    num_branches,
+                    block,
+                    num_blocks,
+                    num_inchannels,
+                    num_channels,
+                    fuse_method,
+                    reset_multi_scale_output,
+                    norm_layer=self.norm_layer,
+                    align_corners=self.align_corners
+                )
             )
             num_inchannels = modules[-1].get_num_inchannels()
 
         return nn.Sequential(*modules), num_inchannels
 
-    def compute_hrnet_feats(self, x):
+    def forward(self, x):
         x = self.layer1(x)
         Fh = torch.clone(x)
 
