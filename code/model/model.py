@@ -7,7 +7,7 @@ from torch import Tensor
 import torch.nn.functional as F
 
 from hrnet import HighResolutionNet
-# from ocr import
+from ocr import SpatialOCR_Module, SpatialGather_Module
 
 
 class ConvBlocks(nn.Module):
@@ -126,6 +126,7 @@ class HintFusionLayer(nn.Module):
 class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
     def __init__(self, cfg, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
         super(IKEM, self).__init__()
+        ocr_width = 128
 
         # Hint Fusion Layer
         self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_SIZE[0], cfg.NUM_KEYPOINTS*2, cfg.HintFusionLayer.out_channel)
@@ -138,9 +139,35 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         self.iggnet = IGGNet(in_ch=256, out_ch=last_inp_channels, num_classes=cfg.NUM_KEYPOINTS, SE_maxpool=True, SE_softmax=False)
 
         # Object-Contextual Representations
-        
+        ocr_mid_channels = 2 * ocr_width
+        ocr_key_channels = ocr_width
+        self.conv3x3_ocr = nn.Sequential(
+                nn.Conv2d(last_inp_channels, ocr_mid_channels, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(ocr_mid_channels),
+                nn.ReLU(inplace=True),
+        )
+        self.ocr_gather_head = SpatialGather_Module(cfg.NUM_KEYPOINTS)
 
-        # Load pretrained model param
+        self.ocr_distri_head = SpatialOCR_Module(
+            in_channels=ocr_mid_channels,
+            key_channels=ocr_key_channels,
+            out_channels=ocr_mid_channels,
+            scale=1,
+            dropout=0.05,
+            norm_layer=nn.BatchNorm2d,
+            align_corners=True
+        )
+        self.cls_head = nn.Conv2d(
+            ocr_mid_channels, cfg.NUM_KEYPOINTS, kernel_size=1, stride=1, padding=0, bias=True
+        )
+        self.aux_head = nn.Sequential(
+            nn.Conv2d(last_inp_channels, last_inp_channels, kernel_size=1, stride=1, padding=0),
+            nn.BatchNorm2d(last_inp_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(last_inp_channels, cfg.NUM_KEYPOINTS, kernel_size=1, stride=1, padding=0, bias=True)
+        )
+        
+    # Load pretrained model param
         if pretrained_model_path is not None:
             model_dict = self.state_dict()
             if not os.path.exists(pretrained_model_path):
@@ -162,3 +189,10 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         Fh, Fc = self.hrnet(feature_map)  # Fh以及Fc
         feature_map = self.iggnet(hint_heatmap, Fh, Fc)
         
+        out_aux = self.aux_head(feature_map) # aux_head : conv norm relu conv (soft object regions), output channel: num_classes
+        feature_map = self.conv3x3_ocr(feature_map) # conv3x3_ocr : conv norm relu (pixel representation
+
+        context = self.ocr_gather_head(feature_map, out_aux) # context :  batch x c x num_keypoint x 1, feature_map: batch, c, H, W
+        feature_map = self.ocr_distri_head(feature_map, context)
+        out = self.cls_head(feature_map)
+        return [out, out_aux]
