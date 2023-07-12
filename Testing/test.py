@@ -323,7 +323,9 @@ for key in list(model_dict.keys()):
     if "conv2" in key:
         print(key)
 print(list(model_dict.keys())[-5:-1])
+print(f">> num of pretrained HRNet param keys: {len(list(model_dict.keys()))}")
 
-# print("===")
-# model_dict = torch.load("D:\python\interactive_keypoint_estimation\save\ExpNum[00001]_Dataset[dataset16]_Model[RITM_SE_HRNet32]_config[spineweb_ours]_seed[42]\model.pth")
-# print(list(model_dict["model"].keys()))
+print("===")
+model_dict = torch.load("D:\python\interactive_keypoint_estimation\save\ExpNum[00001]_Dataset[dataset16]_Model[RITM_SE_HRNet32]_config[spineweb_ours]_seed[42]\model.pth")
+print(list(model_dict["model"].keys()))
+print(f">> num of pretrained IKEM param keys: {len(list(model_dict['model'].keys()))}")

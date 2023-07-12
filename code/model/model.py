@@ -190,14 +190,14 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         Fh, Fc = self.hrnet(feature_map)  # Fh以及Fc
         feature_map = self.iggnet(hint_heatmap, Fh, Fc)
 
-        out_aux = self.aux_head(feature_map)  # aux_head : conv norm relu conv (soft object regions), output channel: num_classes
+        aux_out = self.aux_head(feature_map)  # aux_head : conv norm relu conv (soft object regions), output channel: num_classes
         feature_map = self.conv3x3_ocr(feature_map)  # conv3x3_ocr : conv norm relu (pixel representation
 
-        context = self.ocr_gather_head(feature_map, out_aux)  # context :  batch x c x num_keypoint x 1, feature_map: batch, c, H, W
+        context = self.ocr_gather_head(feature_map, aux_out)  # context :  batch x c x num_keypoint x 1, feature_map: batch, c, H, W
         feature_map = self.ocr_distri_head(feature_map, context)
         out = self.cls_head(feature_map)
 
-        pred_logit = F.interpolate(pred_logit, size=self.image_size, mode='bilinear', align_corners=True)
-        aux_pred_logit = F.interpolate(aux_pred_logit, size=self.image_size, mode='bilinear', align_corners=True)
+        pred_logit = F.interpolate(out, size=self.image_size, mode='bilinear', align_corners=True)
+        aux_pred_logit = F.interpolate(aux_out, size=self.image_size, mode='bilinear', align_corners=True)
 
         return pred_logit, aux_pred_logit

@@ -113,9 +113,9 @@ class RITM(nn.Module):
                     pred_heatmap = torch.zeros_like(input_hint_heatmap)
                 else:
                     pred_heatmap = batch.prev_heatmap.to(input_hint_heatmap.device)
-            
+
             pred_logit, aux_pred_logit = self.forward_model(input_image, input_hint_heatmap, pred_heatmap)
-            
+
             pred_heatmap = pred_logit.sigmoid()
             pred_coord = self.heatmap_maker.get_heatmap2sargmax_coord(pred_heatmap=pred_heatmap)
 

@@ -1,0 +1,14 @@
+Q1.
+在使用他們的模型進行偵測之前，除了下載他們放在：
+    https://www.dropbox.com/sh/m53iqw9loddqhfq/AAD0KuCCxpXsBE435Hw3KJU8a?dl=0
+的模型參數檔以外，還需要下載HRNet的參數檔才能夠執行。
+
+問：HRNet的參數是被獨立出來嗎？在訓練時是否會訓練到HRNet的參數？
+
+
+
+Q2.
+是否需要 "有OCR" 以及 "沒有OCR" 一起訓練？
+
+在 RITM_SE_HRNet32.py 的 forward() 中 pred_logit, aux_pred_logit 分別是有使用OCR以及沒使用OCR的預測結果
+計算Loss時

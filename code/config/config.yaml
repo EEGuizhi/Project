@@ -1,10 +1,3 @@
-# GPUS: (0,1,2,3)
-# LOG_DIR: 'log/'
-# DATA_DIR: ''
-# OUTPUT_DIR: 'output/'
-# WORKERS: 4
-# PRINT_FREQ: 1000
-
 MODEL:
   NAME: IKEM
   IMAGE_SIZE: [3, 512, 256]
@@ -63,6 +56,19 @@ MODEL:
       - 36
       - 72
       - 144
+
+
+Dataset:
+  NAME: 'dataset16'
+  image_size: [512, 256]
+  num_keypoint: 68
+  heatmap_std: 7.5
+  aug:
+    type: 'aug_default'
+    p: [0.2, 0.2, 0.2, 0.2]
+  subpixel_decoding_patch_size: 15
+  subpixel_decoding: True
+
 
 # CUDNN:
 #   BENCHMARK: true
