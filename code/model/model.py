@@ -113,7 +113,7 @@ class HintFusionLayer(nn.Module):
         )
 
     def forward(self, input_image:Tensor, hint_heatmap:Tensor, prev_heatmap:Tensor):
-        f = torch.cat((hint_heatmap, prev_heatmap))
+        f = torch.cat((hint_heatmap, prev_heatmap), dim=1)
         f = self.hintmap_encoder(f)
         if self.ScaleLayer:
             scale = torch.abs(self.scale * self.lr_mult)

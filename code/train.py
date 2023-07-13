@@ -29,7 +29,7 @@ IMAGE_SIZE = (512, 256)
 NUM_OF_KEYPOINTS = 68
 
 EPOCH = 1000
-BATCH_SIZE = 16
+BATCH_SIZE = 4
 LR = 1e-3
 
 
@@ -79,8 +79,8 @@ if __name__ == '__main__':
         A.RandomBrightnessContrast(p=0.5),
         A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
     ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
-    train_set = SpineDataset(num_of_keypoints=NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
-    val_set = SpineDataset(num_of_keypoints=NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=None, set="val")
+    train_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
+    val_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=None, set="val")
     train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
     val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
@@ -122,8 +122,8 @@ if __name__ == '__main__':
             # Init
             images = images.to(device)
             labels = labels.to(device)
-            labels_heatmap = heatmapMaker.coord2heatmap(labels)
-            hint_heatmap = torch.zeros(BATCH_SIZE, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1])
+            labels_heatmap = heatmapMaker.coord2heatmap(labels).to(dtype=images.dtype)
+            hint_heatmap = torch.zeros(BATCH_SIZE, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1]).to(device)
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Determine hint times of this batch during training
@@ -156,10 +156,13 @@ if __name__ == '__main__':
         val_loss = 0
         with torch.no_grad():
             for i, (inputs, labels, hint_indexes) in enumerate(val_loader):
-                inputs = inputs.to(device)
+                images = images.to(device)
                 labels = labels.to(device)
                 labels_heatmap = heatmapMaker.coord2heatmap(labels)
-                outputs, aux_out = model(inputs)
+                hint_heatmap = torch.zeros(BATCH_SIZE, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1]).to(device)
+                prev_pred = torch.zeros_like(hint_heatmap)
+
+                outputs, aux_out = model(hint_heatmap, prev_pred, images)
                 loss = lossManager(outputs, labels, labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)

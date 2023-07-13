@@ -49,13 +49,11 @@ class SpineDataset(torch.utils.data.Dataset):
         label = self.labels[index]
         transformed = self.transform(image=image, keypoints=label)
         image = transformed["image"]
-        label = transformed["label"]
+        label = torch.tensor(transformed["keypoints"])
 
         # np array to tensor
-        image = torch.tensor(image, dtype=torch.float)
-        image = image.permute(2, 0, 1)
-        image /= 255.0  # 0~255 to 0~1
-        image = image * 2 - 1  # 0~1 to -1~1
+        image = torch.tensor(image, dtype=torch.float).permute(2, 0, 1)
+        image = image / 255.0 * 2 - 1  # 0~255 to -1~1
 
         # generate random hint index
         hint_indexes = torch.from_numpy(

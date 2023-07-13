@@ -53,9 +53,6 @@ class HeatmapMaker():
     def heatmap2sargmax_coord(self, heatmap):
         # heatmap: batch, 13, 1024, 1024 (batch, c, row, column)
 
-        if self.config.Dataset.label_smoothing:
-            heatmap = torch.clamp((heatmap - 0.1) / 0.8, 0, 1)
-
         pred_col = torch.sum(heatmap, (-2))  # bach, c, column
         pred_row = torch.sum(heatmap, (-1))  # batch, c, row
 
