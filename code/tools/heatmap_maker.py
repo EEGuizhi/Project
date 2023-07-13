@@ -5,7 +5,7 @@ class HeatmapMaker():
         self.config = config
         self.image_size = config.Dataset.image_size
         self.heatmap_std = config.Dataset.heatmap_std
-        self.morph_pairs = config.Morph.pairs
+        # self.morph_pairs = config.Morph.pairs
         # self.morph_unit_vector_size = config.Morph.unit_vector_size
 
     def make_gaussian_heatmap(self, mean, size, std):

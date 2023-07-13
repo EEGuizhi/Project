@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from heatmap_maker import HeatmapMaker
+from .heatmap_maker import HeatmapMaker
 
 class CustomLoss(nn.Module):
     def __init__(self, use_coord_loss, heatmap_maker=HeatmapMaker):
@@ -10,8 +10,7 @@ class CustomLoss(nn.Module):
         self.mae_criterion = nn.L1Loss()
         self.bce_loss = nn.BCELoss()
 
-    def forward(self, pred_heatmap, label):
-        label_heatmap = None  # label(coord) to label(heatmap) 待完成
+    def forward(self, pred_heatmap, label, label_heatmap):
         loss, pred_heatmap = self.get_heatmap_loss(pred_heatmap=pred_heatmap, label_heatmap=label_heatmap)
         pred_coord = self.heatmap_maker.get_heatmap2sargmax_coord(pred_heatmap=pred_heatmap)
         if self.use_coord_loss:

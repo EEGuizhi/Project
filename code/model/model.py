@@ -124,20 +124,20 @@ class HintFusionLayer(nn.Module):
 
 
 class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
-    def __init__(self, cfg, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
+    def __init__(self, image_size=(512, 256), num_of_keypoints=68, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
         super(IKEM, self).__init__()
-        self.image_size = cfg.IMAGE_SIZE
+        self.image_size = image_size
         ocr_width = 128
 
         # Hint Fusion Layer
-        self.hint_fusion_layer = HintFusionLayer(cfg.IMAGE_SIZE[0], cfg.NUM_KEYPOINTS*2)
+        self.hint_fusion_layer = HintFusionLayer(3, num_of_keypoints*2)
 
         # High Resolution Network
-        self.hrnet = HighResolutionNet(width=32, num_classes=cfg.NUM_KEYPOINTS, ocr_width=128, small=False)
+        self.hrnet = HighResolutionNet(width=32, num_classes=num_of_keypoints, ocr_width=128, small=False)
 
         # Interaction-Guided Gating Network
         last_inp_channels = self.hrnet.last_inp_channels
-        self.iggnet = IGGNet(in_ch=256, out_ch=last_inp_channels, num_classes=cfg.NUM_KEYPOINTS, SE_maxpool=True, SE_softmax=False)
+        self.iggnet = IGGNet(in_ch=256, out_ch=last_inp_channels, num_classes=num_of_keypoints, SE_maxpool=True, SE_softmax=False)
 
         # Object-Contextual Representations
         ocr_mid_channels = 2 * ocr_width
@@ -147,7 +147,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
                 nn.BatchNorm2d(ocr_mid_channels),
                 nn.ReLU(inplace=True),
         )
-        self.ocr_gather_head = SpatialGather_Module(cfg.NUM_KEYPOINTS)
+        self.ocr_gather_head = SpatialGather_Module(num_of_keypoints)
 
         self.ocr_distri_head = SpatialOCR_Module(
             in_channels=ocr_mid_channels,
@@ -159,13 +159,13 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
             align_corners=True
         )
         self.cls_head = nn.Conv2d(
-            ocr_mid_channels, cfg.NUM_KEYPOINTS, kernel_size=1, stride=1, padding=0, bias=True
+            ocr_mid_channels, num_of_keypoints, kernel_size=1, stride=1, padding=0, bias=True
         )
         self.aux_head = nn.Sequential(
             nn.Conv2d(last_inp_channels, last_inp_channels, kernel_size=1, stride=1, padding=0),
             nn.BatchNorm2d(last_inp_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(last_inp_channels, cfg.NUM_KEYPOINTS, kernel_size=1, stride=1, padding=0, bias=True)
+            nn.Conv2d(last_inp_channels, num_of_keypoints, kernel_size=1, stride=1, padding=0, bias=True)
         )
 
     # Load pretrained model param

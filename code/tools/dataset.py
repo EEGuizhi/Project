@@ -28,7 +28,8 @@ class SpineDataset(torch.utils.data.Dataset):
             self.data = json.load(f)
         for item in self.data:
             if item["set"] == set:
-                self.labels.append(item["label"])
+                corners = np.array(item["corners"]) * np.array(item["x_y_size"])
+                self.labels.append(corners.astype(np.int32).tolist())
                 self.images.append(os.path.join(img_root, item["image_path"]))
 
     def __len__(self):

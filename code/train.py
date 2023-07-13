@@ -65,7 +65,7 @@ if __name__ == '__main__':
     config = Munch.fromDict(config)
 
     # Settings
-    set_seed(config.seed if config.seed is not None else 42)
+    set_seed(42)
     print("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     # Initialize
     print("Initialize model...")
-    model = IKEM(config, pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
+    model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(config)
     lossManager = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)
@@ -135,7 +135,7 @@ if __name__ == '__main__':
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
 
                 # Update Model
-                loss = lossManager(outputs, labels)
+                loss = lossManager(outputs, labels, labels_heatmap)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -156,8 +156,9 @@ if __name__ == '__main__':
             for i, (inputs, labels, hint_indexes) in enumerate(val_loader):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
+                labels_heatmap = heatmapMaker.coord2heatmap(labels)
                 outputs, aux_out = model(inputs)
-                loss = lossManager(outputs, labels)
+                loss = lossManager(outputs, labels, labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)
         print(f"Validation Loss：{round(val_loss, 3)}")
