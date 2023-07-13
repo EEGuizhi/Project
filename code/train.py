@@ -17,13 +17,14 @@ from tools.loss import CustomLoss
 from tools.dataset import custom_collate_fn
 
 
-FILE_PATH = "code/dataset/all_data.json"
 IMAGE_ROOT = ""
+FILE_PATH = "./dataset/all_data.json"
+PRETRAINED_MODEL_PATH = "./pretrained_model/hrnetv2_w32_imagenet_pretrained.pth"
 CONFIG_PATH = "./config/config.yaml"
 CHECKPOINT_PATH = None
 
 IMAGE_SIZE = (512, 256)
-NUM_OF_KEYPOINTS = 17
+NUM_OF_KEYPOINTS = 68
 
 EPOCH = 1000
 BATCH_SIZE = 16
@@ -76,14 +77,14 @@ if __name__ == '__main__':
         transforms.ToTensor(),  # 0 ~ 255 to -1 ~ 1
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
     ])
-    train_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
-    val_set = SpineDataset(data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="val")
+    train_set = SpineDataset(num_of_keypoints=NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
+    val_set = SpineDataset(num_of_keypoints=NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="val")
     train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
     val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
     # Initialize
     print("Initialize model...")
-    model = IKEM(config).to(device)
+    model = IKEM(config, pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(config)
     lossManager = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)

@@ -6,11 +6,9 @@ import torch
 from torchvision.io import read_image
 from torchvision.io.image import ImageReadMode
 
-from train import NUM_OF_KEYPOINTS
-
 
 class SpineDataset(torch.utils.data.Dataset):
-    def __init__(self, data_file_path:str, img_root:str, transform=None, set:str="train"):
+    def __init__(self, num_of_keypoints:int, data_file_path:str, img_root:str, transform=None, set:str="train"):
         """
         Parameters:
         ===
@@ -21,6 +19,7 @@ class SpineDataset(torch.utils.data.Dataset):
         """
         self.labels = []
         self.images = []
+        self.num_of_keypoints = num_of_keypoints
         self.root = img_root
         self.transform = transform
         self.set = set
@@ -47,7 +46,7 @@ class SpineDataset(torch.utils.data.Dataset):
 
         # generate random hint index
         hint_indexes = torch.from_numpy(
-            np.random.choice(a=NUM_OF_KEYPOINTS, size=NUM_OF_KEYPOINTS, replace=False)  # (不會重複)
+            np.random.choice(a=self.num_of_keypoints, size=self.num_of_keypoints, replace=False)  # (不會重複)
         )
 
         return image, label, hint_indexes

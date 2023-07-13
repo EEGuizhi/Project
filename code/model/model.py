@@ -6,8 +6,8 @@ from torch import nn
 from torch import Tensor
 import torch.nn.functional as F
 
-from hrnet import HighResolutionNet
-from ocr import SpatialOCR_Module, SpatialGather_Module
+from .hrnet import HighResolutionNet
+from .ocr import SpatialOCR_Module, SpatialGather_Module
 
 
 class ConvBlocks(nn.Module):
