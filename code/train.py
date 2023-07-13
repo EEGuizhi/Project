@@ -6,9 +6,11 @@ import random
 import numpy as np
 from munch import Munch
 
+import cv2
 import torch
 import torch.nn as nn
-from torchvision import transforms
+import albumentations as A
+# keypoints_augmentation：https://albumentations.ai/docs/getting_started/keypoints_augmentation
 
 from model.model import IKEM
 from tools.dataset import SpineDataset
@@ -70,15 +72,15 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Dataset
-    train_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize(IMAGE_SIZE),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.ToTensor(),  # 0 ~ 255 to -1 ~ 1
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # to -1 ~ 1
-    ])
+    train_transform = A.Compose([
+        A.augmentations.geometric.rotate.SafeRotate((-15, 15), p=0.5, border_mode=cv2.BORDER_CONSTANT),
+        A.HorizontalFlip(p=0.5),
+        A.augmentations.geometric.resize.RandomScale((-0.1, 0.0), p=0.5),
+        A.RandomBrightnessContrast(p=0.5),
+        A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
+    ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
     train_set = SpineDataset(num_of_keypoints=NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
-    val_set = SpineDataset(num_of_keypoints=NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="val")
+    val_set = SpineDataset(num_of_keypoints=NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=None, set="val")
     train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
     val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 

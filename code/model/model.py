@@ -133,7 +133,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         self.hint_fusion_layer = HintFusionLayer(3, num_of_keypoints*2)
 
         # High Resolution Network
-        self.hrnet = HighResolutionNet(width=32, num_classes=num_of_keypoints, ocr_width=128, small=False)
+        self.hrnet = HighResolutionNet(width=32, ocr_width=128, small=False)
 
         # Interaction-Guided Gating Network
         last_inp_channels = self.hrnet.last_inp_channels
@@ -174,6 +174,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
             if not os.path.exists(pretrained_model_path):
                 print("Error: Pretrained model file path does not exist.")
                 exit(1)
+            print("Loading Pretrained model..")
             pretrained_dict = torch.load(pretrained_model_path)
             for key in list(pretrained_dict.keys()):
                 if key[0:5] == "conv1": pretrained_dict[key.replace("conv1", "hint_fusion_layer.image_encoder.0")] = pretrained_dict.pop(key)

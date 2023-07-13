@@ -1,14 +1,14 @@
 import os
+import cv2
 import json
 import numpy as np
 
 import torch
-from torchvision.io import read_image
-from torchvision.io.image import ImageReadMode
+import albumentations as A
 
 
 class SpineDataset(torch.utils.data.Dataset):
-    def __init__(self, num_of_keypoints:int, data_file_path:str, img_root:str, transform=None, set:str="train"):
+    def __init__(self, image_size:tuple, num_of_keypoints:int, data_file_path:str, img_root:str, transform=None, set:str="train"):
         """
         Parameters:
         ===
@@ -19,10 +19,16 @@ class SpineDataset(torch.utils.data.Dataset):
         """
         self.labels = []
         self.images = []
+        self.image_size = image_size
         self.num_of_keypoints = num_of_keypoints
         self.root = img_root
-        self.transform = transform
         self.set = set
+        if transform is not None:
+            self.transform = transform
+        else:
+            self.transform = A.Compose([
+                A.augmentations.geometric.resize.Resize(image_size[0], image_size[1], p=1)
+            ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
 
         with open(data_file_path) as f:
             self.data = json.load(f)
@@ -36,14 +42,20 @@ class SpineDataset(torch.utils.data.Dataset):
         return len(self.labels)
 
     def __getitem__(self, index):
-        # label (ground truth)
-        label = torch.Tensor(self.labels[index])
-
-        # image (input)
+        # image (input) & label (ground truth)
         img_path = self.images[index]
-        image = read_image(img_path, mode=ImageReadMode.GRAY)
-        if self.transform is not None:
-            image = self.transform(image)
+        image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        image = np.stack([image, image, image], axis=-1)
+        label = self.labels[index]
+        transformed = self.transform(image=image, keypoints=label)
+        image = transformed["image"]
+        label = transformed["label"]
+
+        # np array to tensor
+        image = torch.tensor(image, dtype=torch.float)
+        image = image.permute(2, 0, 1)
+        image /= 255.0  # 0~255 to 0~1
+        image = image * 2 - 1  # 0~1 to -1~1
 
         # generate random hint index
         hint_indexes = torch.from_numpy(

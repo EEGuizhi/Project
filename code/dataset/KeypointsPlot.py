@@ -10,6 +10,10 @@ LABEL_FILE_PATH = "code/dataset/all_data.json"
 KEYPOINTS_PERC2COORD = True
 
 SHOW_FIRST_LIST = [
+    "sunhl-1th-25-Jul-2016-49 A AP.jpg",
+    "sunhl-1th-09-Jan-2017-212 A AP.jpg",
+    "sunhl-1th-21-Jul-2016-15 E AP.jpg",
+    
     "sunhl-1th-02-Jan-2017-162 B AP.jpg",
     "sunhl-1th-03-Jan-2017-163 B AP.jpg",
     "sunhl-1th-05-Jan-2017-167 A AP.jpg",
