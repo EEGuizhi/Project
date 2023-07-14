@@ -168,7 +168,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
             nn.Conv2d(last_inp_channels, num_of_keypoints, kernel_size=1, stride=1, padding=0, bias=True)
         )
 
-    # Load pretrained model param
+        # Load pretrained model param
         if pretrained_model_path is not None:
             model_dict = self.state_dict()
             if not os.path.exists(pretrained_model_path):

@@ -89,7 +89,8 @@ if __name__ == '__main__':
     model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(config)
-    lossManager = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)
+    bce_loss = nn.BCELoss()
+    # customloss = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)
 
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
@@ -135,15 +136,16 @@ if __name__ == '__main__':
             for click in range(hint_times+1):
                 # Model forward
                 outputs = model(hint_heatmap, prev_pred, images)
+                prev_pred = outputs.detach()
 
                 # Update Model
-                loss = lossManager(outputs, labels, labels_heatmap)
+                pred_heatmap = outputs.sigmoid()
+                loss = bce_loss(pred_heatmap, labels_heatmap)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
                 # Inputs update
-                prev_pred = outputs
                 for s in range(hint_heatmap.shape[0]):  # s = idx of samples
                     hint_heatmap[s, hint_indexes[s, click]] = labels_heatmap[s, hint_indexes[s, click]]
 
@@ -163,7 +165,8 @@ if __name__ == '__main__':
                 prev_pred = torch.zeros_like(hint_heatmap)
 
                 outputs = model(hint_heatmap, prev_pred, images)
-                loss = lossManager(outputs, labels, labels_heatmap)
+                pred_heatmap = outputs.sigmoid()
+                loss = bce_loss(pred_heatmap, labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)
         print(f"Validation Loss：{round(val_loss, 3)}")
