@@ -134,7 +134,7 @@ if __name__ == '__main__':
             # Simulate user interaction
             for click in range(hint_times+1):
                 # Model forward
-                outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                outputs = model(hint_heatmap, prev_pred, images)
 
                 # Update Model
                 loss = lossManager(outputs, labels, labels_heatmap)
@@ -162,7 +162,7 @@ if __name__ == '__main__':
                 hint_heatmap = torch.zeros(BATCH_SIZE, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1]).to(device)
                 prev_pred = torch.zeros_like(hint_heatmap)
 
-                outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                outputs = model(hint_heatmap, prev_pred, images)
                 loss = lossManager(outputs, labels, labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)
