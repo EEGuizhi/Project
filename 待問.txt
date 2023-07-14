@@ -10,5 +10,5 @@ Q1.
 Q2.
 是否需要 "有OCR" 以及 "沒有OCR" 一起訓練？
 
-在 RITM_SE_HRNet32.py 的 forward() 中 pred_logit, aux_pred_logit 分別是有使用OCR以及沒使用OCR的預測結果
+在 RITM_SE_HRNet32.py 的 forward() 中 pred_logit, aux_pred_logit 似乎分別是有使用OCR以及沒使用OCR的預測結果
 計算Loss時

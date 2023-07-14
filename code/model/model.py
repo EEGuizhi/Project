@@ -199,6 +199,6 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         out = self.cls_head(feature_map)
 
         pred_logit = F.interpolate(out, size=self.image_size, mode='bilinear', align_corners=True)
-        aux_pred_logit = F.interpolate(aux_out, size=self.image_size, mode='bilinear', align_corners=True)
+        # aux_pred_logit = F.interpolate(aux_out, size=self.image_size, mode='bilinear', align_corners=True)
 
-        return pred_logit, aux_pred_logit
+        return pred_logit
