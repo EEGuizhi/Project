@@ -124,7 +124,7 @@ if __name__ == '__main__':
             images = images.to(device)
             labels = labels.to(device)
             labels_heatmap = heatmapMaker.coord2heatmap(labels).to(dtype=images.dtype)
-            hint_heatmap = torch.zeros(BATCH_SIZE, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1]).to(device)
+            hint_heatmap = torch.zeros_like(labels_heatmap)
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Determine hint times of this batch during training
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                 images = images.to(device)
                 labels = labels.to(device)
                 labels_heatmap = heatmapMaker.coord2heatmap(labels)
-                hint_heatmap = torch.zeros(BATCH_SIZE, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1]).to(device)
+                hint_heatmap = torch.zeros_like(labels_heatmap)
                 prev_pred = torch.zeros_like(hint_heatmap)
 
                 outputs = model(hint_heatmap, prev_pred, images)
