@@ -66,7 +66,7 @@ if __name__ == '__main__':
         config = yaml.safe_load(f)
     config = Munch.fromDict(config)
 
-    # Settings
+    # Basic settings
     set_seed(42)
     print("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -79,6 +79,10 @@ if __name__ == '__main__':
         A.RandomBrightnessContrast(p=0.5),
         A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
     ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
+    val_transform = A.Compose([
+        A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
+    ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
+
     train_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
     val_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=None, set="val")
     train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
@@ -90,7 +94,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(config)
     bce_loss = nn.BCELoss()
-    # customloss = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)
+    # customloss = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)  # no need
 
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
@@ -116,7 +120,7 @@ if __name__ == '__main__':
 
     # Training
     for epoch in range(start_epoch, EPOCH+1):
-        print(f"\n>> Epoch:{epoch}")
+        print(f"\n>> Epoch：{epoch}")
         model.train()
         train_1stpred_loss = 0
         for i, (images, labels, hint_indexes) in enumerate(train_loader):
@@ -169,7 +173,7 @@ if __name__ == '__main__':
                 loss = bce_loss(pred_heatmap, labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)
-        print(f"Validation Loss：{round(val_loss, 3)}")
+        print(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
 
         save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
 
