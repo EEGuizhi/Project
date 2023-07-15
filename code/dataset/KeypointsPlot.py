@@ -32,8 +32,8 @@ def show_image(data:dict):
 
     # Get keypoints coord
     if KEYPOINTS_PERC2COORD:
-        corner_coords = keypoints_perc2coord(np.array(data["corners"]), data["x_y_size"])
-        center_coords = keypoints_perc2coord(np.array(data["centers"]), data["x_y_size"])
+        corner_coords = keypoints_perc2coord(np.array(data["corners"]), data["y_x_size"])
+        center_coords = keypoints_perc2coord(np.array(data["centers"]), data["y_x_size"])
     else:
         corner_coords = data["corners"]
         center_coords = data["centers"]
@@ -49,9 +49,9 @@ def show_image(data:dict):
 
 def plot_keypoints(img:np.ndarray, corners:list, centers:list):
     for coord in corners:
-        cv2.circle(img, (coord[0], coord[1]), 3, (255, 0, 0), -1)
+        cv2.circle(img, (coord[1], coord[0]), 3, (255, 0, 0), -1)
     for coord in centers:
-        cv2.circle(img, (coord[0], coord[1]), 3, (0, 0, 255), -1)
+        cv2.circle(img, (coord[1], coord[0]), 3, (0, 0, 255), -1)
     return img
 
 

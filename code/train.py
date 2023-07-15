@@ -29,7 +29,7 @@ IMAGE_SIZE = (512, 256)
 NUM_OF_KEYPOINTS = 68
 
 EPOCH = 1000
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 LR = 1e-3
 
 
@@ -58,7 +58,7 @@ def save_model(path:str, epoch:int, model:nn.Module, optimizer:torch.optim.Optim
 
 if __name__ == '__main__':
     # Program Start
-    print("\n>> Start Program --- {} \n".format(time.time()))
+    print(f"\n>> Start Program --- {time.time()} \n")
 
     # Load config (yaml file)
     print("Loading Configuration..")
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
 
     train_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
-    val_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=None, set="val")
+    val_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=val_transform, set="val")
     train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
     val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
@@ -178,4 +178,4 @@ if __name__ == '__main__':
         save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
 
     # Program Ended
-    print("\n>> End Program --- {} \n".format(time.time()))
+    print(f"\n>> End Program --- {time.time()} \n")

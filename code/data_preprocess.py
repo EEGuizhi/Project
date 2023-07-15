@@ -1,14 +1,19 @@
 import os
 import cv2
 import json
+import copy
 import scipy.io
 import numpy as np
 import pandas as pd
 
+"""
+FROM_CSVFILE = False 時座標的 y, x 值會是 x, y ，這邊尚未完成修改
+"""
+
 
 SOURCE_PATH = "D:/python/interactive_keypoint_estimation/code/data/dataset16/boostnet_labeldata"  # dataset路徑
 TARGET_PATH = "./code/dataset/"  # 存放路徑
-VALIDATION_SET_SIZE = 128
+VALIDATION_SET_SIZE = 64
 FROM_CSVFILE = True  # read landmarks from landmarks.csv (讀出來的座標會是相對座標(百分比))
 
 
@@ -23,7 +28,7 @@ def make_data(root:str, image_paths:str, label_coords:list, split:str):
             "image_path": image_paths[idx],
             "corners": label_coords[idx],
             "centers": None,
-            "x_y_size": None,
+            "y_x_size": None,
             "set": split
         }
 
@@ -40,7 +45,7 @@ def make_data(root:str, image_paths:str, label_coords:list, split:str):
                 round(coords[i*4 : i*4 + 4, 0].mean(), 5 if FROM_CSVFILE else None),
                 round(coords[i*4 : i*4 + 4, 1].mean(), 5 if FROM_CSVFILE else None)
             ])
-        item["x_y_size"] = (x_size, y_size)  # (x_size, y_size)
+        item["y_x_size"] = (y_size, x_size)  # (y_size, x_size)
         item["centers"] = centers
 
         data.append(item)
@@ -89,16 +94,16 @@ if __name__ == "__main__":
             keypoints = []
             for i in range(train_label_landmarks.shape[1]//2):
                 keypoints.append([
-                    train_label_landmarks[idx, i],
-                    train_label_landmarks[idx, train_label_landmarks.shape[1]//2 + i]
+                    train_label_landmarks[idx, train_label_landmarks.shape[1]//2 + i],  # y
+                    train_label_landmarks[idx, i]  # x
                 ])
             train_labels.append(keypoints)
         for idx in range(test_label_landmarks.shape[0]):
             keypoints = []
             for i in range(test_label_landmarks.shape[1]//2):
                 keypoints.append([
-                    test_label_landmarks[idx, i],
-                    test_label_landmarks[idx, test_label_landmarks.shape[1]//2 + i]
+                    test_label_landmarks[idx, test_label_landmarks.shape[1]//2 + i],  # y
+                    test_label_landmarks[idx, i]  # x
                 ])
             test_labels.append(keypoints)
         del train_image_filenames, test_image_filenames, train_label_landmarks, test_label_landmarks
@@ -132,7 +137,7 @@ if __name__ == "__main__":
     train_data = make_data(SOURCE_PATH, train_image_paths, train_labels, "train")
     val_data = make_data(SOURCE_PATH, val_image_paths, val_labels, "val")
     test_data = make_data(SOURCE_PATH, test_image_paths, test_labels, "test")
-    all_data = train_data
+    all_data = copy.deepcopy(train_data)
     for item in val_data: all_data.append(item)
     for item in test_data: all_data.append(item)
 

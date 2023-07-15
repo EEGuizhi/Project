@@ -28,7 +28,7 @@ class SpineDataset(torch.utils.data.Dataset):
             self.data = json.load(f)
         for item in self.data:
             if item["set"] == set:
-                corners = np.array(item["corners"]) * np.array(item["x_y_size"])
+                corners = np.array(item["corners"]) * np.array(item["y_x_size"])
                 self.labels.append(corners.astype(np.int32).tolist())
                 self.images.append(os.path.join(img_root, item["image_path"]))
 
@@ -41,6 +41,7 @@ class SpineDataset(torch.utils.data.Dataset):
         image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
         image = np.stack([image, image, image], axis=-1)
         label = self.labels[index]
+
         transformed = self.transform(image=image, keypoints=label)
         image = transformed["image"]
         label = torch.tensor(transformed["keypoints"])

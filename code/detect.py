@@ -1,0 +1,117 @@
+import os
+import time
+import yaml
+import math
+import random
+import numpy as np
+from munch import Munch
+
+import cv2
+import torch
+
+from model.model import IKEM
+from tools.heatmap_maker import HeatmapMaker
+
+
+INPUT_IMAGE_PATH = ""
+CHECKPOINT_PATH = ""
+HINT_TIMES = 10
+
+CONFIG_PATH = "./config/config.yaml"
+IMAGE_SIZE = (512, 256)
+NUM_OF_KEYPOINTS = 68
+
+
+def set_seed(seed):
+    '''
+    設置相同的隨機種子能確保每次執行結果一致。
+    '''
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    return
+
+
+def plot_keypoints(img:np.ndarray, corners:list):
+    return img
+
+
+def show_pred_image(gray_image:np.ndarray, coords:torch.Tensor, click:int):
+    image = np.stack([gray_image, gray_image, gray_image], axis=-1)
+    coords = coords.tolist()
+    for coord in coords:
+        cv2.circle(image, (coord[1], coord[0]), 3, (255, 0, 0), -1)
+    cv2.imwrite("Pred_image_{}.jpg".format(click), )
+
+
+if __name__ == '__main__':
+    # Program Start
+    print(f"\n>> Start Program --- {time.time()} \n")
+
+    # Load config (yaml file)
+    print("Loading Configuration..")
+    with open(CONFIG_PATH) as f:
+        config = yaml.safe_load(f)
+    config = Munch.fromDict(config)
+
+    # Basic settings
+    set_seed(42)
+    print("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Initialize
+    print("Initialize model...")
+    model = IKEM(pretrained_model_path=None).to(device)
+    heatmapMaker = HeatmapMaker(config)
+
+    if os.path.exists(CHECKPOINT_PATH):
+        print("Loading model parameters...")
+        try:
+            checkpoint = torch.load(CHECKPOINT_PATH)
+            model_param = checkpoint["model"]
+            model.load_state_dict(model_param)
+        except:
+            print("Loading model parameters failed")
+            exit()
+    else:
+        print(f"There is no file with file path = '{CHECKPOINT_PATH}'")
+        exit()
+
+    # Read input image
+    orig_image = cv2.imread(INPUT_IMAGE_PATH, cv2.IMREAD_GRAYSCALE)
+    image_shape = orig_image.shape
+    image = np.stack([orig_image, orig_image, orig_image], axis=0)
+    image = torch.tensor(image, dtype=torch.float).unsqueeze(dim=0).to(device)
+    image = image / 255.0 * 2 - 1  # 0~255 to -1~1
+
+    # Init other inputs
+    hint_heatmap = torch.zeros(1, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1])
+    prev_pred = torch.zeros_like(hint_heatmap)
+
+    # Detecting
+    model.eval()
+    for click in range(HINT_TIMES+1):
+        # Model forward
+        outputs = model(hint_heatmap, prev_pred, image)
+        keypoints = heatmapMaker.heatmap2sargmax_coord(outputs)[0]
+        show_pred_image(orig_image, keypoints, click-1)
+
+        # User interaction
+        index = int(input("Please input the index of keypoints you want to fix："))
+        nums = input("Please input the new coord y, x：").split(',')[0:2]
+
+        coord = [int(num) for num in nums]
+        coord = torch.tensor(coord, dtype=torch.float).unsqueeze(dim=0).unsqueeze(dim=0)
+        coord[0, 0, 0] = coord[0, 0, 0] * IMAGE_SIZE[0] / image_shape[0]
+        coord[0, 0, 1] = coord[0, 0, 1] * IMAGE_SIZE[1] / image_shape[1]
+
+        # Inputs update
+        prev_pred = outputs.detach()
+        hint_heatmap[0, index] = heatmapMaker.coord2heatmap(coord)[0, 0]
+
+    # Program Ended
+    print(f"\n>> End Program --- {time.time()} \n")
