@@ -4,7 +4,6 @@ import json
 import numpy as np
 
 import torch
-import albumentations as A
 
 
 class SpineDataset(torch.utils.data.Dataset):
@@ -23,12 +22,7 @@ class SpineDataset(torch.utils.data.Dataset):
         self.num_of_keypoints = num_of_keypoints
         self.root = img_root
         self.set = set
-        if transform is not None:
-            self.transform = transform
-        else:
-            self.transform = A.Compose([
-                A.augmentations.geometric.resize.Resize(image_size[0], image_size[1], p=1)
-            ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
+        self.transform = transform
 
         with open(data_file_path) as f:
             self.data = json.load(f)
