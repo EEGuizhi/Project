@@ -1,7 +1,6 @@
 import os
 import time
 import yaml
-import math
 import random
 import numpy as np
 from munch import Munch
@@ -67,7 +66,7 @@ if __name__ == '__main__':
     if os.path.exists(CHECKPOINT_PATH):
         print("Loading model parameters...")
         try:
-            checkpoint = torch.load(CHECKPOINT_PATH)
+            checkpoint = torch.load(CHECKPOINT_PATH, map_location=device)
             model_param = checkpoint["model"]
             model.load_state_dict(model_param)
         except:
@@ -80,7 +79,8 @@ if __name__ == '__main__':
     # Read input image
     orig_image = cv2.imread(INPUT_IMAGE_PATH, cv2.IMREAD_GRAYSCALE)
     image_shape = orig_image.shape
-    image = np.stack([orig_image, orig_image, orig_image], axis=0)
+    image = cv2.resize(orig_image, (IMAGE_SIZE[1], IMAGE_SIZE[0]))
+    image = np.stack([image, image, image], axis=0)
     image = torch.tensor(image, dtype=torch.float).unsqueeze(dim=0).to(device)
     image = image / 255.0 * 2 - 1  # 0~255 to -1~1
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
         show_pred_image(orig_image, keypoints, click)
 
         # User interaction
-        index = int(input("Please input the index of keypoints you want to fix："))
+        index = int(input("\nPlease input the index of keypoints you want to fix："))
         nums = input("Please input the new coord y, x：").split(',')[0:2]
 
         coord = [int(num) for num in nums]
