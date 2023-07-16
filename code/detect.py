@@ -36,16 +36,12 @@ def set_seed(seed):
     return
 
 
-def plot_keypoints(img:np.ndarray, corners:list):
-    return img
-
-
 def show_pred_image(gray_image:np.ndarray, coords:torch.Tensor, click:int):
     image = np.stack([gray_image, gray_image, gray_image], axis=-1)
     coords = coords.tolist()
     for coord in coords:
-        cv2.circle(image, (coord[1], coord[0]), 3, (255, 0, 0), -1)
-    cv2.imwrite("Pred_image_{}.jpg".format(click), )
+        cv2.circle(image, (int(coord[1]), int(coord[0])), 3, (255, 0, 0), -1)
+    cv2.imwrite("Pred_image_{}.jpg".format(click), image)
 
 
 if __name__ == '__main__':
@@ -94,11 +90,15 @@ if __name__ == '__main__':
 
     # Detecting
     model.eval()
-    for click in range(HINT_TIMES+1):
+    for click in range(HINT_TIMES):
         # Model forward
         outputs = model(hint_heatmap, prev_pred, image)
+
+        # Plot keypoints
         keypoints = heatmapMaker.heatmap2sargmax_coord(outputs)[0]
-        show_pred_image(orig_image, keypoints, click-1)
+        keypoints[:, 0] = keypoints[:, 0] * IMAGE_SIZE[0] / image_shape[0]
+        keypoints[:, 1] = keypoints[:, 1] * IMAGE_SIZE[1] / image_shape[1]
+        show_pred_image(orig_image, keypoints, click)
 
         # User interaction
         index = int(input("Please input the index of keypoints you want to fix："))
