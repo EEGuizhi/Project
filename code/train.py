@@ -27,6 +27,7 @@ CHECKPOINT_PATH = None
 
 IMAGE_SIZE = (512, 256)
 NUM_OF_KEYPOINTS = 68
+USE_CUSTOM_LOSS = True
 
 EPOCH = 1000
 BATCH_SIZE = 8
@@ -93,8 +94,7 @@ if __name__ == '__main__':
     model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(config)
-    bce_loss = nn.BCELoss()
-    # customloss = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker)  # no need
+    loss_func = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker) if USE_CUSTOM_LOSS else nn.BCELoss()
 
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
                 # Update Model
                 pred_heatmap = outputs.sigmoid()
-                loss = bce_loss(pred_heatmap, labels_heatmap)
+                loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
                 outputs = model(hint_heatmap, prev_pred, images)
                 pred_heatmap = outputs.sigmoid()
-                loss = bce_loss(pred_heatmap, labels_heatmap)
+                loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)
         print(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
