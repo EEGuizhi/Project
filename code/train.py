@@ -1,8 +1,8 @@
-import time
+import os
 import yaml
-import copy
 import math
 import random
+import datetime
 import numpy as np
 from munch import Munch
 
@@ -59,7 +59,10 @@ def save_model(path:str, epoch:int, model:nn.Module, optimizer:torch.optim.Optim
 
 if __name__ == '__main__':
     # Program Start
-    print(f"\n>> Start Program --- {time.time()} \n")
+    print(f"\n>> Start Program --- {datetime.datetime.now()} \n")
+    date = str(datetime.date.today()) + "_0"
+    with open("Training_Log_{}.txt".format(date), 'w') as f:
+        f.write(f">> Start Program --- {datetime.datetime.now()} \n")
 
     # Load config (yaml file)
     print("Loading Configuration..")
@@ -71,6 +74,8 @@ if __name__ == '__main__':
     set_seed(42)
     print("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    with open("Training_Log_{}.txt".format(date), 'a') as f:
+        f.write("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
 
     # Dataset
     train_transform = A.Compose([
@@ -139,12 +144,13 @@ if __name__ == '__main__':
             # Simulate user interaction
             for click in range(hint_times+1):
                 # Model forward
-                outputs = model(hint_heatmap, prev_pred, images)
+                outputs, aux_out = model(hint_heatmap, prev_pred, images)
                 prev_pred = outputs.detach()
 
                 # Update Model
                 pred_heatmap = outputs.sigmoid()
                 loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
+                loss += nn.BCELoss()(aux_out, labels_heatmap)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -157,6 +163,9 @@ if __name__ == '__main__':
                 if click == 0:
                     train_1stpred_loss += loss.item() / len(train_loader)
         print(f"Training (first pred.) Loss：{round(train_1stpred_loss, 3)}")
+        with open("Training_Log_{}.txt".format(date), 'a') as f:
+            f.write(f"\n>> Epoch：{epoch}     ")
+            f.write(f"Training (first pred.) Loss：{round(train_1stpred_loss, 3)}     ")
 
         model.eval()
         val_loss = 0
@@ -168,14 +177,18 @@ if __name__ == '__main__':
                 hint_heatmap = torch.zeros_like(labels_heatmap)
                 prev_pred = torch.zeros_like(hint_heatmap)
 
-                outputs = model(hint_heatmap, prev_pred, images)
+                outputs, aux_out = model(hint_heatmap, prev_pred, images)
                 pred_heatmap = outputs.sigmoid()
                 loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)
         print(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
+        with open("Training_Log_{}.txt".format(date), 'a') as f:
+            f.write(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
 
         save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
 
     # Program Ended
-    print(f"\n>> End Program --- {time.time()} \n")
+    print(f"\n>> End Program --- {datetime.datetime.now()} \n")
+    with open("Training_Log_{}.txt".format(date), 'a') as f:
+        f.write(f"\n>> End Program --- {datetime.datetime.now()} \n")

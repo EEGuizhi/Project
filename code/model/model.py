@@ -181,6 +181,7 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
                 elif key[0:5] == "conv2": pretrained_dict[key.replace("conv2", "hint_fusion_layer.last_encoder.0")] = pretrained_dict.pop(key)
                 elif key[0:3] == "bn1": pretrained_dict[key.replace("bn1", "hint_fusion_layer.image_encoder.1")] = pretrained_dict.pop(key)
                 elif key[0:3] == "bn2": pretrained_dict[key.replace("bn2", "hint_fusion_layer.last_encoder.1")] = pretrained_dict.pop(key)
+                elif key[0:10] == "last_layer": pretrained_dict["hrnet."+key.replace("last_layer", "aux_head")] = pretrained_dict.pop(key)
                 else: pretrained_dict["hrnet."+key] = pretrained_dict.pop(key)
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
             model_dict.update(pretrained_dict)
@@ -199,6 +200,6 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
         out = self.cls_head(feature_map)
 
         pred_logit = F.interpolate(out, size=self.image_size, mode='bilinear', align_corners=True)
-        # aux_pred_logit = F.interpolate(aux_out, size=self.image_size, mode='bilinear', align_corners=True)
+        aux_pred_logit = F.interpolate(aux_out, size=self.image_size, mode='bilinear', align_corners=True)
 
-        return pred_logit
+        return pred_logit, aux_pred_logit
