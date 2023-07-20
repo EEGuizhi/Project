@@ -92,7 +92,7 @@ if __name__ == '__main__':
     model.eval()
     for click in range(HINT_TIMES):
         # Model forward
-        outputs = model(hint_heatmap, prev_pred, image)
+        outputs, aux_out = model(hint_heatmap, prev_pred, image)
 
         # Plot keypoints
         keypoints = heatmapMaker.heatmap2sargmax_coord(outputs)[0]
