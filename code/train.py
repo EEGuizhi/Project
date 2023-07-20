@@ -150,7 +150,7 @@ if __name__ == '__main__':
                 # Update Model
                 pred_heatmap = outputs.sigmoid()
                 loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
-                loss += nn.BCELoss()(aux_out, labels_heatmap)
+                loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -180,6 +180,7 @@ if __name__ == '__main__':
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
                 pred_heatmap = outputs.sigmoid()
                 loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
+                loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
                 val_loss += loss.item() / len(val_loader)
         print(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
