@@ -124,9 +124,10 @@ class HintFusionLayer(nn.Module):
 
 
 class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
-    def __init__(self, image_size=(512, 256), num_of_keypoints=68, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
+    def __init__(self, image_size=(512, 256), num_of_keypoints=68, pretrained_model_path=None, use_iggnet=True):  # 假設傳入的config會是config.MODEL
         super(IKEM, self).__init__()
         self.image_size = image_size
+        self.use_iggnet = use_iggnet
         ocr_width = 128
 
         # Hint Fusion Layer
@@ -190,7 +191,10 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
     def forward(self, hint_heatmap:Tensor, prev_heatmap:Tensor, input_image:Tensor):
         feature_map = self.hint_fusion_layer(input_image, hint_heatmap, prev_heatmap)
         Fh, Fc = self.hrnet(feature_map)  # Fh以及Fc
-        feature_map = self.iggnet(hint_heatmap, Fh, Fc)
+        if self.use_iggnet:
+            feature_map = self.iggnet(hint_heatmap, Fh, Fc)
+        else:
+            feature_map = Fc
 
         aux_out = self.aux_head(feature_map)  # aux_head : conv norm relu conv (soft object regions), output channel: num_classes
         feature_map = self.conv3x3_ocr(feature_map)  # conv3x3_ocr : conv norm relu (pixel representation
