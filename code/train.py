@@ -27,7 +27,7 @@ CHECKPOINT_PATH = None
 
 IMAGE_SIZE = (512, 256)
 NUM_OF_KEYPOINTS = 68
-USE_CUSTOM_LOSS = True
+USE_CUSTOM_LOSS = False
 
 EPOCH = 1000
 BATCH_SIZE = 8
@@ -109,10 +109,9 @@ if __name__ == '__main__':
         try:
             start_epoch = checkpoint["epoch"]
             optimizer_param = checkpoint["optimizer"]
-            optimizer = torch.optim.Optimizer.load_state_dict(optimizer_param)
+            optimizer.load_state_dict(optimizer_param)
         except:
             start_epoch = 0
-            optimizer = None
         del model_param, optimizer_param, checkpoint
     else:
         start_epoch = 0
