@@ -85,7 +85,7 @@ if __name__ == '__main__':
     image = image / 255.0 * 2 - 1  # 0~255 to -1~1
 
     # Init other inputs
-    hint_heatmap = torch.zeros(1, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1])
+    hint_heatmap = torch.zeros(1, NUM_OF_KEYPOINTS, IMAGE_SIZE[0], IMAGE_SIZE[1]).to(device)
     prev_pred = torch.zeros_like(hint_heatmap)
 
     # Detecting
@@ -95,9 +95,9 @@ if __name__ == '__main__':
         outputs, aux_out = model(hint_heatmap, prev_pred, image)
 
         # Plot keypoints
-        keypoints = heatmapMaker.heatmap2sargmax_coord(outputs)[0]
-        keypoints[:, 0] = keypoints[:, 0] * IMAGE_SIZE[0] / image_shape[0]
-        keypoints[:, 1] = keypoints[:, 1] * IMAGE_SIZE[1] / image_shape[1]
+        keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
+        keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
+        keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
         show_pred_image(orig_image, keypoints, click)
 
         # User interaction
@@ -110,7 +110,7 @@ if __name__ == '__main__':
         coord[0, 0, 1] = coord[0, 0, 1] * IMAGE_SIZE[1] / image_shape[1]
 
         # Inputs update
-        prev_pred = outputs.detach()
+        prev_pred = outputs.detach().sigmoid()
         hint_heatmap[0, index] = heatmapMaker.coord2heatmap(coord)[0, 0]
 
     # Program Ended
