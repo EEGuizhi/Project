@@ -144,7 +144,7 @@ if __name__ == '__main__':
             for click in range(hint_times+1):
                 # Model forward
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
-                prev_pred = outputs.detach()
+                prev_pred = outputs.detach().sigmoid()
 
                 # Update Model
                 pred_heatmap = outputs.sigmoid()
