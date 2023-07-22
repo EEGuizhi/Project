@@ -84,10 +84,10 @@ if __name__ == '__main__':
         A.augmentations.geometric.resize.RandomScale((-0.1, 0.0), p=0.5),
         A.RandomBrightnessContrast(p=0.5),
         A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
-    ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
+    ], keypoint_params=A.KeypointParams(format='yx', remove_invisible=False))
     val_transform = A.Compose([
         A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
-    ], keypoint_params=A.KeypointParams(format='xy', remove_invisible=False))
+    ], keypoint_params=A.KeypointParams(format='yx', remove_invisible=False))
 
     train_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=train_transform, set="train")
     val_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=val_transform, set="val")
