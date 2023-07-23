@@ -100,7 +100,7 @@ if __name__ == '__main__':
         model_param = checkpoint["model"]
         model.load_state_dict(model_param)
         try:
-            start_epoch = checkpoint["epoch"]
+            start_epoch = checkpoint["epoch"] + 1
             optimizer_param = checkpoint["optimizer"]
             optimizer.load_state_dict(optimizer_param)
         except:

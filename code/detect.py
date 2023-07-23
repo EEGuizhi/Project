@@ -16,8 +16,8 @@ INPUT_IMAGE_PATH = ""
 CHECKPOINT_PATH = ""
 HINT_TIMES = 10
 
-CONFIG_PATH = "./config/config.yaml"
 IMAGE_SIZE = (512, 256)
+HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
 
 
@@ -47,12 +47,6 @@ if __name__ == '__main__':
     # Program Start
     print(f"\n>> Start Program --- {time.time()} \n")
 
-    # Load config (yaml file)
-    print("Loading Configuration..")
-    with open(CONFIG_PATH) as f:
-        config = yaml.safe_load(f)
-    config = Munch.fromDict(config)
-
     # Basic settings
     set_seed(42)
     print("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
@@ -61,7 +55,7 @@ if __name__ == '__main__':
     # Initialize
     print("Initialize model...")
     model = IKEM(pretrained_model_path=None).to(device)
-    heatmapMaker = HeatmapMaker(config)
+    heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
 
     if os.path.exists(CHECKPOINT_PATH):
         print("Loading model parameters...")
