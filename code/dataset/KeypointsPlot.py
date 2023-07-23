@@ -10,6 +10,7 @@ LABEL_FILE_PATH = "code/dataset/all_data.json"
 KEYPOINTS_PERC2COORD = True
 
 SHOW_FIRST_LIST = [
+    "sunhl-1th-01-Mar-2017-310 a ap.jpg"
     "sunhl-1th-25-Jul-2016-49 A AP.jpg",
     "sunhl-1th-09-Jan-2017-212 A AP.jpg",
     "sunhl-1th-21-Jul-2016-15 E AP.jpg",
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     # Show specific images first
     print("\nShowing specific images first:")
     for spec_data in SHOW_FIRST_LIST:
-        if spec_data != "" or spec_data != None:
+        if spec_data != "" and spec_data != None:
             for data in label_data:
                 if spec_data in data["image_path"]: show_image(data)
 

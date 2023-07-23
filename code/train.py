@@ -1,10 +1,8 @@
 import os
-import yaml
 import math
 import random
 import datetime
 import numpy as np
-from munch import Munch
 
 import cv2
 import torch
@@ -17,15 +15,16 @@ from tools.dataset import SpineDataset
 from tools.heatmap_maker import HeatmapMaker
 from tools.loss import CustomLoss
 from tools.dataset import custom_collate_fn
+from tools.loss import find_worst_index
 
 
 IMAGE_ROOT = ""
 FILE_PATH = "./dataset/all_data.json"
 PRETRAINED_MODEL_PATH = "./pretrained_model/hrnetv2_w32_imagenet_pretrained.pth"
-CONFIG_PATH = "./config/config.yaml"
 CHECKPOINT_PATH = None
 
 IMAGE_SIZE = (512, 256)
+HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
 USE_CUSTOM_LOSS = False
 
@@ -64,12 +63,6 @@ if __name__ == '__main__':
     with open("Training_Log_{}.txt".format(date), 'w') as f:
         f.write(f">> Start Program --- {datetime.datetime.now()} \n")
 
-    # Load config (yaml file)
-    print("Loading Configuration..")
-    with open(CONFIG_PATH) as f:
-        config = yaml.safe_load(f)
-    config = Munch.fromDict(config)
-
     # Basic settings
     set_seed(42)
     print("Using device: {}".format("cuda" if torch.cuda.is_available() else "cpu"))
@@ -98,7 +91,7 @@ if __name__ == '__main__':
     print("Initialize model...")
     model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
-    heatmapMaker = HeatmapMaker(config)
+    heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
     loss_func = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker) if USE_CUSTOM_LOSS else nn.BCELoss()
 
     if CHECKPOINT_PATH is not None:
@@ -111,6 +104,7 @@ if __name__ == '__main__':
             optimizer_param = checkpoint["optimizer"]
             optimizer.load_state_dict(optimizer_param)
         except:
+            print("Load optimizer state dict failed..")
             start_epoch = 0
         del model_param, optimizer_param, checkpoint
     else:
@@ -155,8 +149,10 @@ if __name__ == '__main__':
                 optimizer.step()
 
                 # Inputs update
+                keypoints = heatmapMaker.heatmap2sargmax_coord(prev_pred)
                 for s in range(hint_heatmap.shape[0]):  # s = idx of samples
-                    hint_heatmap[s, hint_indexes[s, click]] = labels_heatmap[s, hint_indexes[s, click]]
+                    index = find_worst_index(keypoints[s], labels[s])
+                    hint_heatmap[s, index] = labels_heatmap[s, index]
 
                 # Loss log
                 if click == 0:

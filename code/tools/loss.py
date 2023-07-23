@@ -13,7 +13,7 @@ class CustomLoss(nn.Module):
     def forward(self, pred_heatmap, label, label_heatmap):
         loss, pred_heatmap = self.get_heatmap_loss(pred_heatmap=pred_heatmap, label_heatmap=label_heatmap)
         if self.use_coord_loss:
-            pred_coord = self.heatmap_maker.get_heatmap2sargmax_coord(pred_heatmap=pred_heatmap)
+            pred_coord = self.heatmap_maker.heatmap2sargmax_coord(pred_heatmap=pred_heatmap)
             coord_loss = self.mae_criterion(pred_coord, label)
             loss += 0.01*coord_loss
         return loss
@@ -22,3 +22,9 @@ class CustomLoss(nn.Module):
         pred_heatmap = pred_heatmap.sigmoid()
         heatmap_loss = self.bce_loss(pred_heatmap, label_heatmap)
         return heatmap_loss, pred_heatmap
+
+def find_worst_index(pred_coords:torch.Tensor, label_coords:torch.Tensor):
+    # Dim of inputs = (68, 2)
+    diff_coords = torch.pow(pred_coords - label_coords, 2)
+    diff_coords = torch.sum(diff_coords, dim=-1)
+    return torch.argmax(diff_coords).item()
