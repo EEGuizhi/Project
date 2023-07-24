@@ -18,6 +18,7 @@ class SpineDataset(torch.utils.data.Dataset):
         """
         self.labels = []
         self.images = []
+        self.y_x_size = []
         self.image_size = image_size
         self.num_of_keypoints = num_of_keypoints
         self.root = img_root
@@ -31,6 +32,7 @@ class SpineDataset(torch.utils.data.Dataset):
                 corners = np.array(item["corners"]) * np.array(item["y_x_size"])
                 self.labels.append(corners.astype(np.int32).tolist())
                 self.images.append(os.path.join(img_root, item["image_path"]))
+                self.y_x_size.append(item["y_x_size"])
 
     def __len__(self):
         return len(self.labels)
@@ -55,11 +57,12 @@ class SpineDataset(torch.utils.data.Dataset):
             np.random.choice(a=self.num_of_keypoints, size=self.num_of_keypoints, replace=False)  # (不會重複)
         )
 
-        return image, label, hint_indexes
+        return image, label, hint_indexes, self.y_x_size[index]
 
 def custom_collate_fn(samples):
     # 承接__getitem__()的東西 打包成batch
     images = torch.stack([s[0] for s in samples])
     labels = torch.stack([s[1] for s in samples])
     hint_indexes = torch.stack([s[2] for s in samples])
-    return images, labels, hint_indexes
+    y_x_size = torch.stack([s[3] for s in samples])
+    return images, labels, hint_indexes, y_x_size
