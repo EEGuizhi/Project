@@ -57,7 +57,10 @@ class SpineDataset(torch.utils.data.Dataset):
             np.random.choice(a=self.num_of_keypoints, size=self.num_of_keypoints, replace=False)  # (不會重複)
         )
 
-        return image, label, hint_indexes, self.y_x_size[index]
+        # image size
+        y_x_size = torch.tensor(self.y_x_size[index])
+
+        return image, label, hint_indexes, y_x_size
 
 def custom_collate_fn(samples):
     # 承接__getitem__()的東西 打包成batch
