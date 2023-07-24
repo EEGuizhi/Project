@@ -1,10 +1,8 @@
 import os
-import yaml
 import math
 import random
 import datetime
 import numpy as np
-from munch import Munch
 
 import cv2
 import torch
@@ -16,12 +14,12 @@ from model.model import IKEM
 from tools.dataset import SpineDataset
 from tools.heatmap_maker import HeatmapMaker
 from tools.dataset import custom_collate_fn
+from tools.loss import find_worst_index
 
 
 IMAGE_ROOT = ""
 CHECKPOINT_PATH = ""
 FILE_PATH = "./dataset/all_data.json"
-CONFIG_PATH = "./config/config.yaml"
 
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
@@ -41,6 +39,14 @@ def set_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
     return
+
+def get_MRE(pred_coords:torch.Tensor, label_coords:torch.Tensor):
+    # Dim of inputs = (68, 2)
+    diff_coords = torch.pow(pred_coords - label_coords, 2)
+    diff_coords = torch.sum(diff_coords, dim=-1)
+    diff_coords = torch.pow(diff_coords, 0.5)
+    mre = torch.sum(diff_coords) / NUM_OF_KEYPOINTS
+    return mre
 
 
 if __name__ == '__main__':
@@ -82,9 +88,11 @@ if __name__ == '__main__':
     n_params = 0
     for k, v in model.named_parameters():  # 遍歷model每一層, k是名稱, v是參數值
         n_params += v.reshape(-1).shape[0]  # v是一個tensor, reshape(-1)表示將v展平; shape[0]表示v展平後的元素個數
-    print('Number of model parameters: {}'.format(n_params))
+    print("Number of model parameters: {}".format(n_params))
 
-    # Training
+    # Testing
+    sample_count = 0
+    Mean_Radial_Error = 0
     with torch.no_grad():
         model.eval()
         for i, (images, labels, hint_indexes) in enumerate(test_loader):
@@ -110,9 +118,17 @@ if __name__ == '__main__':
                 pred_heatmap = outputs.sigmoid()
 
                 # Inputs update
+                keypoints = heatmapMaker.heatmap2sargmax_coord(prev_pred)
                 for s in range(hint_heatmap.shape[0]):  # s = idx of samples
-                    hint_heatmap[s, hint_indexes[s, click]] = labels_heatmap[s, hint_indexes[s, click]]
+                    index = find_worst_index(keypoints[s], labels[s])
+                    hint_heatmap[s, index] = labels_heatmap[s, index]
 
+                # Get MRE
+                for s in range(hint_heatmap.shape[0]):
+                    sample_count += 1
+                    Mean_Radial_Error += get_MRE(keypoints[s], labels[s])
+
+    print("Mean Radial Error: {}".format(Mean_Radial_Error / sample_count))
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
