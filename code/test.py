@@ -91,6 +91,7 @@ if __name__ == '__main__':
     print("Number of model parameters: {}".format(n_params))
 
     # Testing
+    sample_count = 0
     hint_times = 10
     Mean_Radial_Error = [0 for i in range(hint_times)]
     with torch.no_grad():
@@ -119,11 +120,9 @@ if __name__ == '__main__':
                     hint_heatmap[s, index] = labels_heatmap[s, index]
 
                 # Get MRE
-                sample_count = 0
                 for s in range(hint_heatmap.shape[0]):
                     sample_count += 1
                     Mean_Radial_Error[click] += get_MRE(keypoints[s], labels[s])
-                Mean_Radial_Error[click] /= sample_count
                 
     for i in range(hint_times):
         print("Mean Radial Error: {}".format(Mean_Radial_Error[i] / sample_count))
