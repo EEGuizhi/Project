@@ -13,7 +13,7 @@ class CustomLoss(nn.Module):
 
     def forward(self, pred_heatmap, label, label_heatmap):
         loss, pred_heatmap = self.get_heatmap_loss(pred_heatmap=pred_heatmap, label_heatmap=label_heatmap)
-        pred_coord = self.heatmap_maker.heatmap2sargmax_coord(pred_heatmap=pred_heatmap)
+        pred_coord = self.heatmap_maker.heatmap2sargmax_coord(pred_heatmap)
         if self.use_angle_loss:
             loss += self.get_angle_loss(pred_coord, label)
         if self.use_coord_loss:
@@ -28,7 +28,7 @@ class CustomLoss(nn.Module):
 
     def get_angle_loss(self, pred_coords:torch.Tensor, label_coords:torch.Tensor):
         # Dim of inputs = (batch, 68, 2)
-        for s in pred_coords.shape[0]:
+        for s in range(pred_coords.shape[0]):
             pred = torch.stack([
                 pred_coords[s, [i*4   for i in range(pred_coords.shape[1]//4)], :],
                 pred_coords[s, [i*4+1 for i in range(pred_coords.shape[1]//4)], :],
@@ -41,12 +41,12 @@ class CustomLoss(nn.Module):
                 label_coords[s, [i*4+2 for i in range(label_coords.shape[1]//4)], :],
                 label_coords[s, [i*4+1 for i in range(label_coords.shape[1]//4)], :]
             ])
-            pred_vecA = pred[2:pred.shape[0], :] - pred[1:pred.shape[0]-1, :]
-            pred_vecB = pred[0:pred.shape[0]-2, :] - pred[1:pred.shape[0]-1, :]
-            pred_angle = torch.atan(pred_vecA[:, 0] / pred_vecA[:, 1]) - torch.atan(pred_vecB[:, 0] / pred_vecB[:, 1])
-            label_vecA = label[2:label.shape[0], :] - label[1:label.shape[0]-1, :]
-            label_vecB = label[0:label.shape[0]-2, :] - label[1:label.shape[0]-1, :]
-            label_angle = torch.atan(label_vecA[:, 0] / label_vecA[:, 1]) - torch.atan(label_vecB[:, 0] / label_vecB[:, 1])
+            pred_vecA = pred[:, 2:pred.shape[0], :] - pred[:, 1:pred.shape[0]-1, :]
+            pred_vecB = pred[:, 0:pred.shape[0]-2, :] - pred[:, 1:pred.shape[0]-1, :]
+            pred_angle = torch.atan(pred_vecA[:, :, 0] / pred_vecA[:, :, 1]) - torch.atan(pred_vecB[:, :, 0] / pred_vecB[:, :, 1])
+            label_vecA = label[:, 2:label.shape[0], :] - label[:, 1:label.shape[0]-1, :]
+            label_vecB = label[:, 0:label.shape[0]-2, :] - label[:, 1:label.shape[0]-1, :]
+            label_angle = torch.atan(label_vecA[:, :, 0] / label_vecA[:, :, 1]) - torch.atan(label_vecB[:, :, 0] / label_vecB[:, :, 1])
             return self.mae_criterion(pred_angle, label_angle)
 
 def find_worst_index(pred_coords:torch.Tensor, label_coords:torch.Tensor):
