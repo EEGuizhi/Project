@@ -171,7 +171,7 @@ if __name__ == '__main__':
         print(f"Training (second pred.) Loss：{round(train_2ndpred_loss, 3)}")
         with open("Training_Log_{}.txt".format(date), 'a') as f:
             f.write(f"\n>> Epoch：{epoch}     ")
-            f.write(f"Training (first pred.) Loss：{round(train_1stpred_loss, 3)}     ")
+            f.write(f"Training (first pred.) Loss：{round(train_1stpred_loss, 3)}  ")
             f.write(f"Training (second pred.) Loss：{round(train_2ndpred_loss, 3)}     ")
 
         model.eval()
@@ -204,7 +204,7 @@ if __name__ == '__main__':
         print(f"Validation (first pred.) Loss：{round(val_1stloss, 3)}")
         print(f"Validation (second pred.) Loss：{round(val_2ndloss, 3)}")
         with open("Training_Log_{}.txt".format(date), 'a') as f:
-            f.write(f"Validation (first pred.) Loss：{round(val_1stloss, 3)}")
+            f.write(f"Validation (first pred.) Loss：{round(val_1stloss, 3)}  ")
             f.write(f"Validation (second pred.) Loss：{round(val_2ndloss, 3)}")
 
         save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
