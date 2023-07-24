@@ -24,7 +24,7 @@ from tools.loss import find_worst_index
 """
 
 # Path Settings
-IMAGE_ROOT = ""
+IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
 FILE_PATH = "./dataset/all_data.json"
 PRETRAINED_MODEL_PATH = "./pretrained_model/hrnetv2_w32_imagenet_pretrained.pth"
 CHECKPOINT_PATH = None
@@ -33,11 +33,11 @@ CHECKPOINT_PATH = None
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
-USE_CUSTOM_LOSS = False
+USE_CUSTOM_LOSS = True
 NOT_INTERACTIVE = False
 
 # Training Settings
-EPOCH = 500
+EPOCH = 300
 BATCH_SIZE = 8
 LR = 1e-3
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
-    loss_func = CustomLoss(use_coord_loss=True, heatmap_maker=heatmapMaker) if USE_CUSTOM_LOSS else nn.BCELoss()
+    loss_func = CustomLoss(use_coord_loss=False, use_angle_loss=True, heatmap_maker=heatmapMaker) if USE_CUSTOM_LOSS else nn.BCELoss()
 
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
@@ -130,7 +130,8 @@ if __name__ == '__main__':
         print(f"\n>> Epoch：{epoch}")
         model.train()
         train_1stpred_loss = 0
-        for i, (images, labels, hint_indexes) in enumerate(train_loader):
+        train_2ndpred_loss = 0
+        for i, (images, labels, hint_indexes, y_x_size) in enumerate(train_loader):
             # Init
             images = images.to(device)
             labels = labels.to(device)
@@ -164,32 +165,47 @@ if __name__ == '__main__':
                     hint_heatmap[s, index] = labels_heatmap[s, index]
 
                 # Loss log
-                if click == 0:
-                    train_1stpred_loss += loss.item() / len(train_loader)
+                if click == 0: train_1stpred_loss += loss.item() / len(train_loader)
+                elif click == 1: train_2ndpred_loss += loss.item() / len(train_loader)
         print(f"Training (first pred.) Loss：{round(train_1stpred_loss, 3)}")
+        print(f"Training (second pred.) Loss：{round(train_2ndpred_loss, 3)}")
         with open("Training_Log_{}.txt".format(date), 'a') as f:
             f.write(f"\n>> Epoch：{epoch}     ")
             f.write(f"Training (first pred.) Loss：{round(train_1stpred_loss, 3)}     ")
+            f.write(f"Training (second pred.) Loss：{round(train_2ndpred_loss, 3)}     ")
 
         model.eval()
-        val_loss = 0
+        val_1stloss = 0
+        val_2ndloss = 0
         with torch.no_grad():
-            for i, (inputs, labels, hint_indexes) in enumerate(val_loader):
+            for i, (inputs, labels, hint_indexes, y_x_size) in enumerate(val_loader):
                 images = images.to(device)
                 labels = labels.to(device)
                 labels_heatmap = heatmapMaker.coord2heatmap(labels)
                 hint_heatmap = torch.zeros_like(labels_heatmap)
                 prev_pred = torch.zeros_like(hint_heatmap)
 
-                outputs, aux_out = model(hint_heatmap, prev_pred, images)
-                pred_heatmap = outputs.sigmoid()
-                loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
-                loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
+                for click in range(2):
+                    outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                    prev_pred = outputs.detach().sigmoid()
 
-                val_loss += loss.item() / len(val_loader)
-        print(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
+                    pred_heatmap = outputs.sigmoid()
+                    loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
+                    loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
+
+                    # Inputs update
+                    keypoints = heatmapMaker.heatmap2sargmax_coord(prev_pred)
+                    for s in range(hint_heatmap.shape[0]):  # s = idx of samples
+                        index = find_worst_index(keypoints[s], labels[s])
+                        hint_heatmap[s, index] = labels_heatmap[s, index]
+
+                    if click == 0: val_1stloss += loss.item() / len(val_loader)
+                    elif click == 1: val_2ndloss += loss.item() / len(val_loader)
+        print(f"Validation (first pred.) Loss：{round(val_1stloss, 3)}")
+        print(f"Validation (second pred.) Loss：{round(val_2ndloss, 3)}")
         with open("Training_Log_{}.txt".format(date), 'a') as f:
-            f.write(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
+            f.write(f"Validation (first pred.) Loss：{round(val_1stloss, 3)}")
+            f.write(f"Validation (second pred.) Loss：{round(val_2ndloss, 3)}")
 
         save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
 
