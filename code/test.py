@@ -91,8 +91,8 @@ if __name__ == '__main__':
     print("Number of model parameters: {}".format(n_params))
 
     # Testing
-    sample_count = 0
-    Mean_Radial_Error = 0
+    hint_times = 10
+    Mean_Radial_Error = [0 for i in range(hint_times)]
     with torch.no_grad():
         model.eval()
         for i, (images, labels, hint_indexes) in enumerate(test_loader):
@@ -102,11 +102,6 @@ if __name__ == '__main__':
             labels_heatmap = heatmapMaker.coord2heatmap(labels).to(dtype=images.dtype)
             hint_heatmap = torch.zeros_like(labels_heatmap)
             prev_pred = torch.zeros_like(hint_heatmap)
-
-            # Determine hint times of this batch during training
-            prob = np.array([math.pow(2, -i) for i in range(NUM_OF_KEYPOINTS)])
-            prob = prob.tolist() / prob.sum()
-            hint_times = np.random.choice(a=NUM_OF_KEYPOINTS, size=None, p=prob)
 
             # Simulate user interaction
             for click in range(hint_times+1):
@@ -124,11 +119,14 @@ if __name__ == '__main__':
                     hint_heatmap[s, index] = labels_heatmap[s, index]
 
                 # Get MRE
+                sample_count = 0
                 for s in range(hint_heatmap.shape[0]):
                     sample_count += 1
-                    Mean_Radial_Error += get_MRE(keypoints[s], labels[s])
-
-    print("Mean Radial Error: {}".format(Mean_Radial_Error / sample_count))
+                    Mean_Radial_Error[click] += get_MRE(keypoints[s], labels[s])
+                Mean_Radial_Error[click] /= sample_count
+                
+    for i in range(hint_times):
+        print("Mean Radial Error: {}".format(Mean_Radial_Error[i] / sample_count))
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
