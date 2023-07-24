@@ -63,7 +63,7 @@ if __name__ == '__main__':
         A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
     ], keypoint_params=A.KeypointParams(format='yx', remove_invisible=False))
 
-    test_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=test_transform, set="val")
+    test_set = SpineDataset(IMAGE_SIZE, NUM_OF_KEYPOINTS, data_file_path=FILE_PATH, img_root=IMAGE_ROOT, transform=test_transform, set="test")
     test_loader = torch.utils.data.DataLoader(test_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
     # Initialize
@@ -93,10 +93,10 @@ if __name__ == '__main__':
     # Testing
     sample_count = 0
     hint_times = 10
-    Mean_Radial_Error = [0 for i in range(hint_times)]
+    Mean_Radial_Error = [0 for i in range(hint_times+1)]
     with torch.no_grad():
         model.eval()
-        for i, (images, labels, hint_indexes) in enumerate(test_loader):
+        for i, (images, labels, hint_indexes, y_x_size) in enumerate(test_loader):
             # Init
             images = images.to(device)
             labels = labels.to(device)
@@ -105,6 +105,7 @@ if __name__ == '__main__':
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Simulate user interaction
+            sample_count += images.shape[0]
             for click in range(hint_times+1):
                 # Model forward
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
@@ -121,10 +122,14 @@ if __name__ == '__main__':
 
                 # Get MRE
                 for s in range(hint_heatmap.shape[0]):
-                    sample_count += 1
+                    labels[s, :, 0] = labels[s, :, 0] * y_x_size[s, 0] / IMAGE_SIZE[0]
+                    labels[s, :, 1] = labels[s, :, 1] * y_x_size[s, 1] / IMAGE_SIZE[1]
+                    keypoints[s, :, 0] = keypoints[s, :, 0] * y_x_size[s, 0] / IMAGE_SIZE[0]
+                    keypoints[s, :, 1] = keypoints[s, :, 1] * y_x_size[s, 1] / IMAGE_SIZE[1]
                     Mean_Radial_Error[click] += get_MRE(keypoints[s], labels[s])
                 
-    for i in range(hint_times):
+    for i in range(hint_times+1):
+        print(sample_count)
         print("Mean Radial Error: {}".format(Mean_Radial_Error[i] / sample_count))
 
     # Program Ended
