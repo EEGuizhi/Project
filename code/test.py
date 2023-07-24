@@ -17,8 +17,8 @@ from tools.dataset import custom_collate_fn
 from tools.loss import find_worst_index
 
 
-IMAGE_ROOT = ""
-CHECKPOINT_PATH = ""
+IMAGE_ROOT = "/content/Project/code/dataset/dataset16/boostnet_labeldata"
+CHECKPOINT_PATH = "/content/drive/MyDrive/專題/checkpoint_3.pth"
 FILE_PATH = "./dataset/all_data.json"
 
 IMAGE_SIZE = (512, 256)
@@ -45,7 +45,7 @@ def get_MRE(pred_coords:torch.Tensor, label_coords:torch.Tensor):
     diff_coords = torch.pow(pred_coords - label_coords, 2)
     diff_coords = torch.sum(diff_coords, dim=-1)
     diff_coords = torch.pow(diff_coords, 0.5)
-    mre = torch.sum(diff_coords) / NUM_OF_KEYPOINTS
+    mre = torch.sum(diff_coords).item() / NUM_OF_KEYPOINTS
     return mre
 
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # Testing
     sample_count = 0
     hint_times = 10
-    Mean_Radial_Error = [0 for i in range(hint_times+1)]
+    Mean_Radial_Error = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     with torch.no_grad():
         model.eval()
         for i, (images, labels, hint_indexes, y_x_size) in enumerate(test_loader):
@@ -105,7 +105,6 @@ if __name__ == '__main__':
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Simulate user interaction
-            sample_count += images.shape[0]
             for click in range(hint_times+1):
                 # Model forward
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
@@ -122,14 +121,18 @@ if __name__ == '__main__':
 
                 # Get MRE
                 for s in range(hint_heatmap.shape[0]):
-                    labels[s, :, 0] = labels[s, :, 0] * y_x_size[s, 0] / IMAGE_SIZE[0]
-                    labels[s, :, 1] = labels[s, :, 1] * y_x_size[s, 1] / IMAGE_SIZE[1]
-                    keypoints[s, :, 0] = keypoints[s, :, 0] * y_x_size[s, 0] / IMAGE_SIZE[0]
-                    keypoints[s, :, 1] = keypoints[s, :, 1] * y_x_size[s, 1] / IMAGE_SIZE[1]
-                    Mean_Radial_Error[click] += get_MRE(keypoints[s], labels[s])
+                    if click == 0: sample_count += 1
+                    labels_coord = torch.zeros_like(labels)
+                    labels_coord[s, :, 0] = labels[s, :, 0] * y_x_size[s, 0].item() / IMAGE_SIZE[0]
+                    labels_coord[s, :, 1] = labels[s, :, 1] * y_x_size[s, 1].item() / IMAGE_SIZE[1]
+                    keypoints[s, :, 0] = keypoints[s, :, 0] * y_x_size[s, 0].item() / IMAGE_SIZE[0]
+                    keypoints[s, :, 1] = keypoints[s, :, 1] * y_x_size[s, 1].item() / IMAGE_SIZE[1] 
+                    mre_value = get_MRE(keypoints[s, :, :], labels_coord[s, :, :])
+                    Mean_Radial_Error[click] += mre_value
+                    # print("MRE", get_MRE(keypoints[s, :, :], labels_coord[s, :, :]))
+                    # print(f"Mean_Radial_Error[{click}]:{Mean_Radial_Error[click]}\n")
                 
     for i in range(hint_times+1):
-        print(sample_count)
         print("Mean Radial Error: {}".format(Mean_Radial_Error[i] / sample_count))
 
     # Program Ended
