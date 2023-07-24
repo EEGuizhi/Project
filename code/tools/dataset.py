@@ -50,7 +50,7 @@ class SpineDataset(torch.utils.data.Dataset):
         image = torch.tensor(image, dtype=torch.float).permute(2, 0, 1)
         image = image / 255.0 * 2 - 1  # 0~255 to -1~1
 
-        # generate random hint index
+        # generate random hint index (not used)
         hint_indexes = torch.from_numpy(
             np.random.choice(a=self.num_of_keypoints, size=self.num_of_keypoints, replace=False)  # (不會重複)
         )

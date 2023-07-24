@@ -23,13 +23,13 @@ class HeatmapMaker():
 
     def heatmap2sargmax_coord(self, heatmap:torch.Tensor):
         # heatmap: (batch, 68, 512, 256) = (batch, ch, row, col)
-        heatmap_col = torch.sum(heatmap, (-2))  # (batch, ch, col)
-        heatmap_row = torch.sum(heatmap, (-1))  # (batch, ch, row)
+        heatmap_col = torch.sum(heatmap, dim=-2)  # (batch, ch, col)
+        heatmap_row = torch.sum(heatmap, dim=-1)  # (batch, ch, row)
         mesh_c = torch.arange(heatmap_col.shape[-1]).unsqueeze(0).unsqueeze(0).to(heatmap.device)  # (1, 1, col)
         mesh_r = torch.arange(heatmap_row.shape[-1]).unsqueeze(0).unsqueeze(0).to(heatmap.device)  # (1, 1, row)
 
-        coord_c = torch.sum(heatmap_col * mesh_c, (-1)) / torch.sum(heatmap_col, (-1))
-        coord_r = torch.sum(heatmap_row * mesh_r, (-1)) / torch.sum(heatmap_row, (-1))
-        coord = torch.stack([coord_r, coord_c], -1)  # (batch, 68, 2)
+        coord_c = torch.sum(heatmap_col * mesh_c, dim=-1) / torch.sum(heatmap_col, dim=-1)
+        coord_r = torch.sum(heatmap_row * mesh_r, dim=-1) / torch.sum(heatmap_row, dim=-1)
+        coord = torch.stack([coord_r, coord_c], dim=-1)  # (batch, 68, 2)
 
         return coord

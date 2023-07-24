@@ -17,18 +17,27 @@ from tools.loss import CustomLoss
 from tools.dataset import custom_collate_fn
 from tools.loss import find_worst_index
 
+"""
+當前目標：
+1. 設置"NOT_INTERACTIVE"參數，決定模型的訓練方式、模型的輸入、單個epoch的Loss。
+2. 以CSV檔儲存Loss相關資料。
+"""
 
+# Path Settings
 IMAGE_ROOT = ""
 FILE_PATH = "./dataset/all_data.json"
 PRETRAINED_MODEL_PATH = "./pretrained_model/hrnetv2_w32_imagenet_pretrained.pth"
 CHECKPOINT_PATH = None
 
+# Basic Settings
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
 USE_CUSTOM_LOSS = False
+NOT_INTERACTIVE = False
 
-EPOCH = 1000
+# Training Settings
+EPOCH = 500
 BATCH_SIZE = 8
 LR = 1e-3
 

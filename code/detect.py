@@ -1,9 +1,7 @@
 import os
-import time
-import yaml
 import random
+import datetime
 import numpy as np
-from munch import Munch
 
 import cv2
 import torch
@@ -45,7 +43,7 @@ def show_pred_image(gray_image:np.ndarray, coords:torch.Tensor, click:int):
 
 if __name__ == '__main__':
     # Program Start
-    print(f"\n>> Start Program --- {time.time()} \n")
+    print(f"\n>> Start Program --- {datetime.datetime.now()} \n")
 
     # Basic settings
     set_seed(42)
@@ -108,4 +106,4 @@ if __name__ == '__main__':
         hint_heatmap[0, index] = heatmapMaker.coord2heatmap(coord)[0, 0]
 
     # Program Ended
-    print(f"\n>> End Program --- {time.time()} \n")
+    print(f"\n>> End Program --- {datetime.datetime.now()} \n")
