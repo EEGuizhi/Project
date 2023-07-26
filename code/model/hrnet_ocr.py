@@ -13,12 +13,18 @@ from .ocr import SpatialOCR_Module, SpatialGather_Module
 
 class hrnet_ocr(nn.Module):  # HRNet OCR
     def __init__(self, image_size=(512, 256), im_ch:int=3, out_ch:int=64, num_of_keypoints=68, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
-        super(IKEM, self).__init__()
+        super(hrnet_ocr, self).__init__()
         self.image_size = image_size
         ocr_width = 128
 
         self.image_encoder = nn.Sequential(
             nn.Conv2d(in_channels=im_ch, out_channels=out_ch, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True)
+        )
+
+        self.last_encoder = nn.Sequential(
+            nn.Conv2d(in_channels=out_ch, out_channels=out_ch, kernel_size=3, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(out_ch),
             nn.ReLU(inplace=True)
         )
@@ -72,6 +78,7 @@ class hrnet_ocr(nn.Module):  # HRNet OCR
 
     def forward(self, input_image:Tensor):
         feature_map = self.image_encoder(input_image)
+        feature_map = self.last_encoder(feature_map)
         Fh, Fc = self.hrnet(feature_map)  # Fh以及Fc
         feature_map = Fc
 
