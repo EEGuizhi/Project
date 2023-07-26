@@ -11,7 +11,7 @@ from .ocr import SpatialOCR_Module, SpatialGather_Module
 
 
 
-class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
+class hrnet_ocr(nn.Module):  # HRNet OCR
     def __init__(self, image_size=(512, 256), im_ch:int=3, out_ch:int=64, num_of_keypoints=68, pretrained_model_path=None):  # 假設傳入的config會是config.MODEL
         super(IKEM, self).__init__()
         self.image_size = image_size
