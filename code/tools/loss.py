@@ -28,7 +28,7 @@ class CustomLoss(nn.Module):
     def get_angle_loss(self, pred_coords:torch.Tensor, label_coords:torch.Tensor):
         # Dim of inputs = (batch, 68, 2)
         rand_index = np.random.choice(4, size=pred_coords.shape[1]//4).tolist()
-        for i in range(pred_coords.shape[1]):
+        for i in range(pred_coords.shape[1]//4):
             rand_index[i] += i*4
 
         pred_vecA = pred_coords[:, rand_index[2:], :] - pred_coords[:, rand_index[1:-1], :]
@@ -42,7 +42,7 @@ class CustomLoss(nn.Module):
         pred_angle_vec = torch.stack((torch.cos(pred_angle), torch.sin(pred_angle)), -1)
         label_angle_vec = torch.stack((torch.cos(label_angle), torch.sin(label_angle)), -1)
 
-        N = pred_coords.shape[0] * pred_coords.shape[1]
+        N = pred_angle.shape[0] * pred_angle.shape[1]
         label_similarity = torch.ones(N, dtype=pred_angle_vec.dtype, device=pred_coords.device)
         angle_loss = self.angle_criterion(pred_angle_vec.reshape(N, 2), label_angle_vec.reshape(N, 2), label_similarity)
 

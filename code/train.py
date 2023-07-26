@@ -175,11 +175,11 @@ if __name__ == '__main__':
                     prev_pred = outputs.detach().sigmoid()
 
                     pred_heatmap = outputs.sigmoid()
-                    loss = loss_func(pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
+                    pred_coord = heatmapMaker.heatmap2sargmax_coord(prev_pred)
+                    loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
                     loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
                     # Inputs update
-                    pred_coord = heatmapMaker.heatmap2sargmax_coord(prev_pred)
                     for s in range(hint_heatmap.shape[0]):  # s = idx of samples
                         index = choose_hint_index(pred_coord[s], labels[s])
                         hint_heatmap[s, index] = labels_heatmap[s, index]
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         val_p2MRE = np.array(pred2_MRE).sum() / len(pred2_MRE)
         print(f"Validation (first pred.) Loss：{round(val_p1Loss, 3)}")
         print(f"Validation (second pred.) Loss：{round(val_p2Loss, 3)}")
-        print(f"Validation pred1 MRE = {round(val_p1MRE, 3)}, pred2 MRE = {round(val_p1MRE, 3)}")
+        print(f"Validation pred1 MRE = {round(val_p1MRE, 3)},  pred2 MRE = {round(val_p1MRE, 3)}")
 
         # Saving data
         dataframe = write_log(
