@@ -11,8 +11,8 @@ from tools.dataset import custom_collate_fn
 from tools.misc import *
 
 
-IMAGE_ROOT = "/content/Project/code/dataset/dataset16/boostnet_labeldata"
-CHECKPOINT_PATH = "/content/drive/MyDrive/專題/checkpoint_3.pth"
+IMAGE_ROOT = ""
+CHECKPOINT_PATH = ""
 FILE_PATH = "./dataset/all_data.json"
 
 IMAGE_SIZE = (512, 256)
