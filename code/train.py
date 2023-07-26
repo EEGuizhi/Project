@@ -29,7 +29,7 @@ NUM_OF_KEYPOINTS = 68
 
 USE_CUSTOM_LOSS = True
 MAX_HINT_TIMES = 6
-ITERATIVE_TRAINING_AFTER_EPOCH = 25
+ITERATIVE_TRAINING_AFTER_EPOCH = 35
 
 # Training Settings
 EPOCH = 300
@@ -116,7 +116,7 @@ if __name__ == '__main__':
                 prob = np.array([math.pow(2, -i) for i in range(MAX_HINT_TIMES+1)])
                 prob[0] = prob[1]
                 prob = prob.tolist() / prob.sum()
-                hint_times = np.random.choice(a=NUM_OF_KEYPOINTS, size=None, p=prob)
+                hint_times = np.random.choice(a=MAX_HINT_TIMES+1, size=None, p=prob)
 
             # Simulate user interaction
             model.eval()
@@ -151,9 +151,12 @@ if __name__ == '__main__':
             elif hint_times == 1: pred2_loss.append(loss.item())
 
         train_p1Loss = np.array(pred1_loss).sum() / len(pred1_loss)
-        if len(pred2_loss) > 0: train_p2Loss = np.array(pred2_loss).sum() / len(pred2_loss)
         print(f"Training (first pred.) Loss：{round(train_p1Loss, 3)}")
-        print(f"Training (second pred.) Loss：{round(train_p2Loss, 3)}")
+        if len(pred2_loss) > 0:
+            train_p2Loss = np.array(pred2_loss).sum() / len(pred2_loss)
+            print(f"Training (second pred.) Loss：{round(train_p2Loss, 3)}")
+        else:
+            train_p2Loss = None
 
 
         # Validation
