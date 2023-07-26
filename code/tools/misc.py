@@ -56,7 +56,7 @@ def get_MRE(pred_coords:torch.Tensor, label_coords:torch.Tensor):
     diff_coords = torch.pow(pred_coords - label_coords, 2)
     diff_coords = torch.sum(diff_coords, dim=-1)
     diff_coords = torch.pow(diff_coords, 0.5)
-    mre = torch.sum(diff_coords) / num_of_keypoints
+    mre = torch.sum(diff_coords).cpu() / num_of_keypoints
     return mre
 
 

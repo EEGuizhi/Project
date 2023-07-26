@@ -151,7 +151,7 @@ if __name__ == '__main__':
             elif hint_times == 1: pred2_loss.append(loss.item())
 
         train_p1Loss = np.array(pred1_loss).sum() / len(pred1_loss)
-        train_p2Loss = np.array(pred2_loss).sum() / len(pred2_loss)
+        if len(pred2_loss) > 0: train_p2Loss = np.array(pred2_loss).sum() / len(pred2_loss)
         print(f"Training (first pred.) Loss：{round(train_p1Loss, 3)}")
         print(f"Training (second pred.) Loss：{round(train_p2Loss, 3)}")
 
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         val_p2MRE = np.array(pred2_MRE).sum() / len(pred2_MRE)
         print(f"Validation (first pred.) Loss：{round(val_p1Loss, 3)}")
         print(f"Validation (second pred.) Loss：{round(val_p2Loss, 3)}")
-        print(f"Validation pred1 MRE = {round(val_p1MRE, 3)},  pred2 MRE = {round(val_p1MRE, 3)}")
+        print(f"Validation pred1 MRE = {round(val_p1MRE, 3)},  pred2 MRE = {round(val_p2MRE, 3)}")
 
         # Saving data
         dataframe = write_log(
