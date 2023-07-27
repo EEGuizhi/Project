@@ -81,29 +81,35 @@ if __name__ == '__main__':
     prev_pred = torch.zeros_like(hint_heatmap)
 
     # Detecting
-    model.eval()
-    for click in range(HINT_TIMES):
-        # Model forward
-        outputs, aux_out = model(hint_heatmap, prev_pred, image)
+    with torch.no_grad():
+        manual_revision = []
+        model.eval()
+        for click in range(HINT_TIMES):
+            # Model forward
+            outputs, aux_out = model(hint_heatmap, prev_pred, image)
 
-        # Plot keypoints
-        keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
-        keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
-        keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
-        show_pred_image(orig_image, keypoints, click)
+            # Plot keypoints
+            keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
+            keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
+            keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
+            show_pred_image(orig_image, keypoints, click)
 
-        # User interaction
-        index = int(input("\nPlease input the index of keypoints you want to fix："))
-        nums = input("Please input the new coord y, x：").split(',')[0:2]
+            # User interaction
+            index = int(input("\nPlease input the index of keypoints you want to fix："))
+            nums = input("Please input the new coord y, x：").split(',')[0:2]
 
-        coord = [int(num) for num in nums]
-        coord = torch.tensor(coord, dtype=torch.float).unsqueeze(dim=0).unsqueeze(dim=0)
-        coord[0, 0, 0] = coord[0, 0, 0] * IMAGE_SIZE[0] / image_shape[0]
-        coord[0, 0, 1] = coord[0, 0, 1] * IMAGE_SIZE[1] / image_shape[1]
+            coord = [int(num) for num in nums]
+            manual_revision.append({
+                "index": index,
+                "coord": coord
+            })
+            coord = torch.tensor(coord, dtype=torch.float).unsqueeze(dim=0).unsqueeze(dim=0)
+            coord[0, 0, 0] = coord[0, 0, 0] * IMAGE_SIZE[0] / image_shape[0]
+            coord[0, 0, 1] = coord[0, 0, 1] * IMAGE_SIZE[1] / image_shape[1]
 
-        # Inputs update
-        prev_pred = outputs.detach().sigmoid()
-        hint_heatmap[0, index] = heatmapMaker.coord2heatmap(coord)[0, 0]
+            # Inputs update
+            prev_pred = outputs.detach().sigmoid()
+            hint_heatmap[0, index] = heatmapMaker.coord2heatmap(coord)[0, 0]
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
