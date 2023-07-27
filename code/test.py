@@ -15,6 +15,7 @@ IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
 CHECKPOINT_PATH = ""
 FILE_PATH = "./dataset/all_data.json"
 
+HINT_TIMES = 5
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
@@ -63,8 +64,8 @@ if __name__ == '__main__':
 
     # Testing
     sample_count = 0
-    hint_times = 10
-    Mean_Radial_Error = [0 for i in range(hint_times+1)]
+    Model_MRE = [0 for i in range(HINT_TIMES+1)]
+    Manual_MRE = [0 for i in range(HINT_TIMES+1)]
     with torch.no_grad():
         model.eval()
         for i, (images, labels, hint_indexes, y_x_size) in enumerate(test_loader):
@@ -76,30 +77,46 @@ if __name__ == '__main__':
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Simulate user interaction
-            for click in range(hint_times+1):
+            for click in range(HINT_TIMES+1):
                 # Model forward
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
                 prev_pred = outputs.sigmoid()
 
                 # Inputs update
                 keypoints = heatmapMaker.heatmap2sargmax_coord(prev_pred)
-                for s in range(hint_heatmap.shape[0]):  # s = idx of samples
+                if click == 0: manual_keypoints = keypoints.detach()
+                for s in range(hint_heatmap.shape[0]):  # Model revision
                     index = find_worst_index(keypoints[s], labels[s])
                     hint_heatmap[s, index] = labels_heatmap[s, index]
+                for s in range(manual_keypoints.shape[0]):  # Manual revision
+                    index = find_worst_index(manual_keypoints[s], labels[s])
+                    manual_keypoints[s, index] = labels[s, index]
 
                 # Get MRE
                 for s in range(hint_heatmap.shape[0]):
+                    # Number of samples
                     if click == 0: sample_count += 1
-                    labels_coord = torch.zeros_like(labels)
-                    labels_coord[s, :, 0] = labels[s, :, 0] * y_x_size[s, 0].item() / IMAGE_SIZE[0]
-                    labels_coord[s, :, 1] = labels[s, :, 1] * y_x_size[s, 1].item() / IMAGE_SIZE[1]
-                    keypoints[s, :, 0] = keypoints[s, :, 0] * y_x_size[s, 0].item() / IMAGE_SIZE[0]
-                    keypoints[s, :, 1] = keypoints[s, :, 1] * y_x_size[s, 1].item() / IMAGE_SIZE[1] 
-                    mre_value = get_MRE(keypoints[s, :, :], labels_coord[s, :, :])
-                    Mean_Radial_Error[click] += mre_value
 
-    for i in range(hint_times+1):
-        print("Mean Radial Error: {}".format(Mean_Radial_Error[i] / sample_count))
+                    # Scale to original size
+                    labels_coord = torch.zeros_like(labels)
+                    scale_manual_keypoints = torch.zeros_like(labels)
+                    labels_coord[s] = labels[s] * y_x_size[s] / IMAGE_SIZE
+                    keypoints[s] = keypoints[s] * y_x_size[s] / IMAGE_SIZE
+                    scale_manual_keypoints[s] = manual_keypoints[s] * y_x_size[s] / IMAGE_SIZE
+
+                    # Calc MRE
+                    Model_MRE[click] += get_MRE(keypoints[s], labels_coord[s])
+                    Manual_MRE[click] += get_MRE(scale_manual_keypoints[s], labels_coord[s])
+
+    # Outputs
+    print("[Model Revision]")
+    for i in range(HINT_TIMES+1):
+        print(f"Mean Radial Error (click {i}): {Model_MRE[i] / sample_count}")
+
+    print("[Fully Manual Revision]")
+    for i in range(HINT_TIMES+1):
+        print(f"Mean Radial Error (click {i}): {Manual_MRE[i] / sample_count}")
+
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
