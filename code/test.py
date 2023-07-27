@@ -72,6 +72,9 @@ if __name__ == '__main__':
             # Init
             images = images.to(device)
             labels = labels.to(device)
+            y_x_size = y_x_size.to(device)
+            image_size = torch.tensor(IMAGE_SIZE, device=device)
+
             labels_heatmap = heatmapMaker.coord2heatmap(labels).to(dtype=images.dtype)
             hint_heatmap = torch.zeros_like(labels_heatmap)
             prev_pred = torch.zeros_like(hint_heatmap)
@@ -84,13 +87,10 @@ if __name__ == '__main__':
 
                 # Inputs update
                 keypoints = heatmapMaker.heatmap2sargmax_coord(prev_pred)
-                if click == 0: manual_keypoints = keypoints.detach()
+                if click == 0: manual_keypoints = keypoints.clone()
                 for s in range(hint_heatmap.shape[0]):  # Model revision
                     index = find_worst_index(keypoints[s], labels[s])
                     hint_heatmap[s, index] = labels_heatmap[s, index]
-                for s in range(manual_keypoints.shape[0]):  # Manual revision
-                    index = find_worst_index(manual_keypoints[s], labels[s])
-                    manual_keypoints[s, index] = labels[s, index]
 
                 # Get MRE
                 for s in range(hint_heatmap.shape[0]):
@@ -100,20 +100,24 @@ if __name__ == '__main__':
                     # Scale to original size
                     labels_coord = torch.zeros_like(labels)
                     scale_manual_keypoints = torch.zeros_like(labels)
-                    labels_coord[s] = labels[s] * y_x_size[s] / IMAGE_SIZE
-                    keypoints[s] = keypoints[s] * y_x_size[s] / IMAGE_SIZE
-                    scale_manual_keypoints[s] = manual_keypoints[s] * y_x_size[s] / IMAGE_SIZE
+                    labels_coord[s] = labels[s] * y_x_size[s] / image_size
+                    keypoints[s] = keypoints[s] * y_x_size[s] / image_size
+                    scale_manual_keypoints[s] = manual_keypoints[s] * y_x_size[s] / image_size
 
                     # Calc MRE
                     Model_MRE[click] += get_MRE(keypoints[s], labels_coord[s])
                     Manual_MRE[click] += get_MRE(scale_manual_keypoints[s], labels_coord[s])
+
+                for s in range(manual_keypoints.shape[0]):  # Manual revision
+                    index = find_worst_index(manual_keypoints[s], labels[s])
+                    manual_keypoints[s, index] = labels[s, index]
 
     # Outputs
     print("[Model Revision]")
     for i in range(HINT_TIMES+1):
         print(f"Mean Radial Error (click {i}): {Model_MRE[i] / sample_count}")
 
-    print("[Fully Manual Revision]")
+    print("\n[Fully Manual Revision]")
     for i in range(HINT_TIMES+1):
         print(f"Mean Radial Error (click {i}): {Manual_MRE[i] / sample_count}")
 
