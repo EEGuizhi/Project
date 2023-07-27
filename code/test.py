@@ -11,7 +11,7 @@ from tools.dataset import custom_collate_fn
 from tools.misc import *
 
 
-IMAGE_ROOT = ""
+IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
 CHECKPOINT_PATH = ""
 FILE_PATH = "./dataset/all_data.json"
 
@@ -44,12 +44,10 @@ if __name__ == '__main__':
 
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
-        try:
-            checkpoint = torch.load(CHECKPOINT_PATH)
-            model_param = checkpoint["model"]
-            model.load_state_dict(model_param)
-        except:
-            print("Loading checkpoint file error..")
+        checkpoint = torch.load(CHECKPOINT_PATH)
+        epoch = checkpoint["epoch"]
+        model_param = checkpoint["model"]
+        model.load_state_dict(model_param)
         del model_param, checkpoint
     else:
         print("Need checkpoint file to start testing..")
@@ -60,6 +58,8 @@ if __name__ == '__main__':
     for k, v in model.named_parameters():  # 遍歷model每一層, k是名稱, v是參數值
         n_params += v.reshape(-1).shape[0]  # v是一個tensor, reshape(-1)表示將v展平; shape[0]表示v展平後的元素個數
     print("Number of model parameters: {}".format(n_params))
+
+    print(f"\nCheckpoint Model is trained after {epoch} epoch\n")
 
     # Testing
     sample_count = 0

@@ -15,6 +15,12 @@ from tools.loss import CustomLoss
 from tools.dataset import custom_collate_fn
 from tools.misc import *
 
+"""
+[train_ver2.py] :
+Using hint heatmap before first prediction,
+simulate user interaction (update hint heatmap) in each iteration.
+"""
+
 
 # Path Settings
 IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
@@ -27,12 +33,13 @@ IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
 
-USE_CUSTOM_LOSS = True
-MAX_HINT_TIMES = 6
+USE_CUSTOM_LOSS = False
+MAX_HINT_TIMES = 10
+MAX_ITER_TIMES = 3
 ITERATIVE_TRAINING_AFTER_EPOCH = 30
 
 # Training Settings
-EPOCH = 300
+EPOCH = 249
 BATCH_SIZE = 8
 LR = 1e-3
 
@@ -114,14 +121,20 @@ if __name__ == '__main__':
                 hint_times = 0
             else:
                 prob = np.array([math.pow(2, -i) for i in range(MAX_HINT_TIMES+1)])
-                prob[0] = prob[1]
+                prob[0] = prob[1] / 2
                 prob = prob.tolist() / prob.sum()
                 hint_times = np.random.choice(a=MAX_HINT_TIMES+1, size=None, p=prob)
 
-            # Simulate user interaction
+            # Update hint heatmap before first pred.
+            if hint_times > 0:
+                for s in range(hint_heatmap.shape[0]):
+                    hint_heatmap[s, hint_indexes[s, 0:hint_times]] = labels_heatmap[s, hint_indexes[s, 0:hint_times]]
+
+            # Iterztive training
+            iter_times = np.random.choice(MAX_ITER_TIMES, size=None)
             model.eval()
             with torch.no_grad():
-                for click in range(hint_times):
+                for iter in range(iter_times):
                     # Model forward
                     outputs, aux_out = model(hint_heatmap, prev_pred, images)
                     prev_pred = outputs.detach().sigmoid()
@@ -129,7 +142,7 @@ if __name__ == '__main__':
                     # Inputs update
                     pred_coord = heatmapMaker.heatmap2sargmax_coord(prev_pred)
                     for s in range(hint_heatmap.shape[0]):  # s = idx of samples
-                        index = choose_hint_index(pred_coord[s], labels[s])
+                        index = find_worst_index(pred_coord[s], labels[s])
                         hint_heatmap[s, index] = labels_heatmap[s, index]
 
             # Train model
@@ -204,7 +217,7 @@ if __name__ == '__main__':
 
         # Saving data
         dataframe = write_log(
-            "Training_Log_{}.csv".format(date),
+            "Training_iter_Log_{}.csv".format(date),
             dataframe, epoch, train_p1Loss, train_p2Loss,
             val_p1Loss, val_p2Loss, val_p1MRE, val_p2MRE
         )

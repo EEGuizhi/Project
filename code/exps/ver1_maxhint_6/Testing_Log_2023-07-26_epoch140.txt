@@ -1,0 +1,24 @@
+(guizhi_yunn) bschen@ubuntu:~/project/Project/code$ python test.py
+
+>> Start Program --- 2023-07-26 22:47:23.489498 
+
+Using device: cuda
+Initialize model...
+Loading model parameters...
+
+Checkpoint Model is trained after 140 epoch
+
+Number of model parameters: 32942889
+Mean Radial Error: 53.61735534667969
+Mean Radial Error: 51.047203063964844
+Mean Radial Error: 49.90210723876953
+Mean Radial Error: 48.40594482421875
+Mean Radial Error: 47.274654388427734
+Mean Radial Error: 46.89787673950195
+Mean Radial Error: 46.59783935546875
+Mean Radial Error: 46.28532028198242
+Mean Radial Error: 46.10957717895508
+Mean Radial Error: 46.019317626953125
+Mean Radial Error: 45.96867370605469
+
+>> End Program --- 2023-07-26 22:48:10.191437
