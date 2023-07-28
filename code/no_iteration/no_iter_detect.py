@@ -77,7 +77,6 @@ if __name__ == '__main__':
 
     # Detecting
     with torch.no_grad():
-        manual_revision = []
         model.eval()
 
         # Model forward
