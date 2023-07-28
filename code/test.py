@@ -87,7 +87,7 @@ if __name__ == '__main__':
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Simulate user interaction
-            manual_revision = []
+            manual_revision = [[] for s in range(labels.shape[0])]
             for click in range(HINT_TIMES+1):
                 # Model forward
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
                     # Model revision
                     index = find_worst_index(pred_coords[s], labels[s])
                     hint_heatmap[s, index] = labels_heatmap[s, index]
-                    manual_revision.append({
+                    manual_revision[s].append({
                         "index": index,
                         "coord": origSize_labels[s, index]
                     })
