@@ -92,6 +92,8 @@ if __name__ == '__main__':
             keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
             keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
             keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
+            for item in manual_revision:
+                keypoints[item["index"]] = item["coord"]
             show_pred_image(orig_image, keypoints, click)
 
             # User interaction

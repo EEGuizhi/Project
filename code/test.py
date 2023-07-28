@@ -106,6 +106,8 @@ if __name__ == '__main__':
                     scale_manual_keypoints[s] = manual_keypoints[s] * y_x_size[s] / image_size
 
                     # Calc MRE
+                    for item in manual_revision[s]:
+                        keypoints[s, item["index"]] = item["coord"]
                     Model_MRE[click] += get_MRE(keypoints[s], origSize_labels[s])
                     Manual_MRE[click] += get_MRE(scale_manual_keypoints[s], origSize_labels[s])
 
