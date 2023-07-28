@@ -32,11 +32,13 @@ class hrnet_ocr(nn.Module):  # HRNet OCR
         # High Resolution Network
         self.hrnet = HighResolutionNet(width=32, ocr_width=128, small=False)
 
+        last_inp_channels = self.hrnet.last_inp_channels
+
         # Object-Contextual Representations
         ocr_mid_channels = 2 * ocr_width
         ocr_key_channels = ocr_width
         self.conv3x3_ocr = nn.Sequential(
-                nn.Conv2d(out_ch, ocr_mid_channels, kernel_size=3, stride=1, padding=1),
+                nn.Conv2d(last_inp_channels, ocr_mid_channels, kernel_size=3, stride=1, padding=1),
                 nn.BatchNorm2d(ocr_mid_channels),
                 nn.ReLU(inplace=True),
         )
@@ -55,12 +57,12 @@ class hrnet_ocr(nn.Module):  # HRNet OCR
             ocr_mid_channels, num_of_keypoints, kernel_size=1, stride=1, padding=0, bias=True
         )
         self.aux_head = nn.Sequential(
-            nn.Conv2d(out_ch, out_ch, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(out_ch),
+            nn.Conv2d(last_inp_channels, last_inp_channels, kernel_size=1, stride=1, padding=0),
+            nn.BatchNorm2d(last_inp_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_ch, num_of_keypoints, kernel_size=1, stride=1, padding=0, bias=True)
+            nn.Conv2d(last_inp_channels, num_of_keypoints, kernel_size=1, stride=1, padding=0, bias=True)
         )
-
+        
         # Load pretrained model param
         if pretrained_model_path is not None:
             model_dict = self.state_dict()
