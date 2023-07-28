@@ -17,10 +17,10 @@ from tools.misc import *
 
 
 # Path Settings
-IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
+IMAGE_ROOT = ""
 FILE_PATH = "./dataset/all_data.json"
 PRETRAINED_MODEL_PATH = "./pretrained_model/hrnetv2_w32_imagenet_pretrained.pth"
-CHECKPOINT_PATH = None
+CHECKPOINT_PATH = ""
 
 # Basic Settings
 IMAGE_SIZE = (512, 256)
@@ -127,26 +127,25 @@ if __name__ == '__main__':
         val_MRE = 0
         model.eval()
         with torch.no_grad():
-            for i, (inputs, labels, hint_indexes, y_x_size) in enumerate(val_loader):
+            for i, (images, labels, hint_indexes, y_x_size) in enumerate(val_loader):
                 images = images.to(device)
                 labels = labels.to(device)
                 labels_heatmap = heatmapMaker.coord2heatmap(labels)
 
                 outputs, aux_out = model(images)
-                prev_pred = outputs.detach().sigmoid()
-                pred_coord = heatmapMaker.heatmap2sargmax_coord(prev_pred)
                 pred_heatmap = outputs.sigmoid()
+                pred_coord = heatmapMaker.heatmap2sargmax_coord(pred_heatmap)
                 loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
                 loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
                 # Inputs update
-                val_loss.append(loss.item())
-                val_MRE.append(get_batch_MRE(pred_coord, labels))
+                val_loss += loss.item()
+                val_MRE += get_batch_MRE(pred_coord, labels).item()
 
-        val_loss = np.array(val_loss).sum() / len(val_loss)
-        val_MRE = np.array(val_MRE).sum() / len(val_MRE)
-        print(f"Validation (first pred.) Loss：{round(val_loss, 3)}")
-        print(f"Validation pred1 MRE = {round(val_MRE, 3)}")
+        val_loss += val_loss / len(val_loader)
+        val_MRE += val_MRE / len(val_loader)
+        print(f"Validation Loss：{round(val_loss, 3)}")
+        print(f"Validation MRE = {round(val_MRE, 3)}")
 
         # Saving data
         dataframe = write_log(
