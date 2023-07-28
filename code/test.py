@@ -64,7 +64,6 @@ if __name__ == '__main__':
 
     # Testing
     sample_count = 0
-    manual_revision = []
     Model_MRE = [0 for i in range(HINT_TIMES+1)]
     Manual_MRE = [0 for i in range(HINT_TIMES+1)]
     with torch.no_grad():
@@ -75,8 +74,12 @@ if __name__ == '__main__':
             labels = labels.to(device)
             y_x_size = y_x_size.to(device)
             image_size = torch.tensor(IMAGE_SIZE, device=device)
-            for s in range(labels.shape[0]):  # get labels coord in original size
-                origSize_labels = torch.zeros_like(labels)
+
+            # Get coords in original size
+            keypoints = torch.zeros_like(labels)
+            scale_manual_keypoints = torch.zeros_like(labels)
+            origSize_labels = torch.zeros_like(labels)
+            for s in range(labels.shape[0]):
                 origSize_labels[s] = labels[s] * y_x_size[s] / image_size
 
             labels_heatmap = heatmapMaker.coord2heatmap(labels).to(dtype=images.dtype)
@@ -84,13 +87,14 @@ if __name__ == '__main__':
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Simulate user interaction
+            manual_revision = []
             for click in range(HINT_TIMES+1):
                 # Model forward
                 outputs, aux_out = model(hint_heatmap, prev_pred, images)
                 prev_pred = outputs.sigmoid()
 
-                keypoints = heatmapMaker.heatmap2sargmax_coord(prev_pred)
-                if click == 0: manual_keypoints = keypoints.clone()
+                pred_coords = heatmapMaker.heatmap2sargmax_coord(prev_pred)
+                if click == 0: manual_keypoints = pred_coords.clone()
 
                 # Get MRE
                 for s in range(hint_heatmap.shape[0]):
@@ -98,23 +102,22 @@ if __name__ == '__main__':
                     if click == 0: sample_count += 1
 
                     # Scale to original size
-                    scale_manual_keypoints = torch.zeros_like(labels)
-                    keypoints[s] = keypoints[s] * y_x_size[s] / image_size
+                    keypoints[s] = pred_coords[s] * y_x_size[s] / image_size
                     scale_manual_keypoints[s] = manual_keypoints[s] * y_x_size[s] / image_size
 
                     # Calc MRE
                     Model_MRE[click] += get_MRE(keypoints[s], origSize_labels[s])
                     Manual_MRE[click] += get_MRE(scale_manual_keypoints[s], origSize_labels[s])
 
-                for s in range(hint_heatmap.shape[0]):  # Model revision
-                    index = find_worst_index(keypoints[s], labels[s])
+                    # Model revision
+                    index = find_worst_index(pred_coords[s], labels[s])
                     hint_heatmap[s, index] = labels_heatmap[s, index]
                     manual_revision.append({
                         "index": index,
                         "coord": origSize_labels[s, index]
                     })
 
-                for s in range(manual_keypoints.shape[0]):  # Manual revision
+                    # Manual revision
                     index = find_worst_index(manual_keypoints[s], labels[s])
                     manual_keypoints[s, index] = labels[s, index]
 
