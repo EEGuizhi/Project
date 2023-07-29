@@ -26,6 +26,7 @@ simulate user interaction (update hint heatmap) in each iteration.
 IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
 FILE_PATH = "./dataset/all_data.json"
 PRETRAINED_MODEL_PATH = "./pretrained_model/hrnetv2_w32_imagenet_pretrained.pth"
+TARGET_FOLDER = ""+"/"
 CHECKPOINT_PATH = None
 
 # Basic Settings
@@ -217,11 +218,11 @@ if __name__ == '__main__':
 
         # Saving data
         dataframe = write_log(
-            "Training_iter_Log_{}.csv".format(date),
+            TARGET_FOLDER+"Training_iter_Log_{}.csv".format(date),
             dataframe, epoch, train_p1Loss, train_p2Loss,
             val_p1Loss, val_p2Loss, val_p1MRE, val_p2MRE
         )
-        save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
+        save_model(TARGET_FOLDER+"checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")

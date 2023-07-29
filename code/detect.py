@@ -2,6 +2,7 @@ import os
 import random
 import datetime
 import numpy as np
+import matplotlib.pyplot as plt
 
 import cv2
 import torch
@@ -9,14 +10,21 @@ import torch
 from model.model import IKEM
 from tools.heatmap_maker import HeatmapMaker
 
+USE_GUI = True
 
-INPUT_IMAGE_PATH = ""
-CHECKPOINT_PATH = ""
+INPUT_IMAGE_PATH = "jkpadWx0.jpeg"
+CHECKPOINT_PATH = "max_iter3_epoch51.pth"
 HINT_TIMES = 10
 
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
+
+COLOR_CODE = [
+    (255,  0,  0), (  0,255,  0), (  0,  0,255), (255,255,  0), (  0,255,255), ( 46,139, 87),
+    (255,  0,  0), (  0,  0,205), (205,133, 63), (  0,255,  0), (  0,  0,255), (  0,  0,128),
+    (  0,139,139), ( 46,139, 87), (255,255,  0), (106, 90,205), (  0,255,255)
+]
 
 
 def set_seed(seed):
@@ -33,12 +41,34 @@ def set_seed(seed):
     return
 
 
-def show_pred_image(gray_image:np.ndarray, coords:torch.Tensor, click:int):
+def show_pred_image(gray_image:np.ndarray, coords:torch.Tensor, click:int, save_folder:str=''):
     image = np.stack([gray_image, gray_image, gray_image], axis=-1)
     coords = coords.tolist()
+    radius = 6
+    i = 0
     for coord in coords:
-        cv2.circle(image, (int(coord[1]), int(coord[0])), 3, (255, 0, 0), -1)
-    cv2.imwrite("Pred_image_{}.jpg".format(click), image)
+        if i%4 == 0:
+            cv2.putText(image, f"{i//4 + 1}", (int(coord[1])+radius, int(coord[0])), cv2.FONT_HERSHEY_SIMPLEX, 1.5, COLOR_CODE[i//4], 2.5)
+        cv2.circle(image, (int(coord[1]), int(coord[0])), radius, COLOR_CODE[i//4], -1)
+        i += 1
+    if save_folder != '': save_folder += '/'
+    cv2.imwrite(save_folder+"Pred_image_{}.jpg".format(click), image)
+    return image if USE_GUI else None
+
+
+fix_coord = None
+true_coord = None
+def onclick(event):
+    global fix_coord, true_coord
+    x, y = event.xdata, event.ydata
+    print(f"Click x, y = {x}, {y} on picture")
+    if fix_coord is None:
+        fix_coord = torch.tensor([y, x])
+        plt.plot(x, y, 'rx')  # red X mark
+    else:
+        true_coord = [y, x]
+        plt.plot(x, y, 'gX')  # green X mark
+    plt.draw()
 
 
 if __name__ == '__main__':
@@ -81,6 +111,11 @@ if __name__ == '__main__':
     prev_pred = torch.zeros_like(hint_heatmap)
 
     # Detecting
+    i = 0
+    while os.path.exists("predictions_{}".format(i)):
+        i += 1
+    target_folder = "predictions_{}".format(i)
+    os.makedirs(target_folder)
     with torch.no_grad():
         manual_revision = []
         model.eval()
@@ -93,14 +128,32 @@ if __name__ == '__main__':
             keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
             keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
             for item in manual_revision:
-                keypoints[item["index"]] = item["coord"]
-            show_pred_image(orig_image, keypoints, click)
+                keypoints[item["index"], 0], keypoints[item["index"], 1] = item["coord"][0], item["coord"][1]
+            pred_image = show_pred_image(orig_image, keypoints, click, target_folder)
 
-            # User interaction
-            index = int(input("\nPlease input the index of keypoints you want to fix："))
-            nums = input("Please input the new coord y, x：").split(',')[0:2]
+            if USE_GUI:
+                fig = plt.figure("Pred image of click {}".format(click))
+                plt.imshow(pred_image)
+                plt.xticks([]), plt.yticks([])
 
-            coord = [int(num) for num in nums]
+                print("\nPlease click the point you would like to correct First")
+                print("then click the new coord of that point on picture.\n")
+                fig.canvas.mpl_connect('button_press_event', onclick)
+                plt.show()
+
+                # Find closest point index
+                fix_coord = fix_coord.repeat(keypoints.shape[0], 1)
+                keypoints = keypoints.cpu() - fix_coord
+                index = torch.argmin(torch.sum(torch.pow(keypoints, 2), dim=-1)).item()
+                coord = true_coord
+
+                fix_coord = None
+            else:
+                # User interaction
+                index = int(input("\nPlease input the index of keypoints you want to fix："))
+                nums = input("Please input the new coord y, x：").split(',')[0:2]
+                coord = [int(num) for num in nums]
+
             manual_revision.append({
                 "index": index,
                 "coord": coord
