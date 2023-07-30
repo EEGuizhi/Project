@@ -35,7 +35,7 @@ NUM_OF_KEYPOINTS = 68
 
 USE_CUSTOM_LOSS = False
 MAX_HINT_TIMES = 10
-ITERATIVE_TRAINING_AFTER_EPOCH = 20
+HINT_TRAINING_AFTER_EPOCH = 20
 
 # Training Settings
 EPOCH = 249
@@ -116,7 +116,7 @@ if __name__ == '__main__':
             prev_pred = torch.zeros_like(hint_heatmap)
 
             # Determine hint times of this batch during training
-            if epoch <= ITERATIVE_TRAINING_AFTER_EPOCH:
+            if epoch <= HINT_TRAINING_AFTER_EPOCH:
                 hint_times = 0
             else:
                 prob = np.array([math.pow(2, -i) for i in range(MAX_HINT_TIMES+1)])
