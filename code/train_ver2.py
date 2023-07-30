@@ -72,6 +72,7 @@ if __name__ == '__main__':
     train_loader = torch.utils.data.DataLoader(train_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
     val_loader = torch.utils.data.DataLoader(val_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
+
     # Initialize
     print("Initialize model...")
     model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
@@ -82,17 +83,18 @@ if __name__ == '__main__':
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
         checkpoint = torch.load(CHECKPOINT_PATH)
+        start_epoch = checkpoint["epoch"] + 1
         model_param = checkpoint["model"]
         model.load_state_dict(model_param)
+        optimizer_param = checkpoint["optimizer"]
+        optimizer.load_state_dict(optimizer_param)
         try:
-            start_epoch = checkpoint["epoch"] + 1
-            optimizer_param = checkpoint["optimizer"]
-            optimizer.load_state_dict(optimizer_param)
+            saved_train_loss, saved_val_loss = checkpoint["train_loss"], checkpoint["val_loss"]
         except:
-            print("Load optimizer state dict failed..")
-            start_epoch = 1
+            saved_train_loss, saved_val_loss = None, None
         del model_param, optimizer_param, checkpoint
     else:
+        saved_train_loss, saved_val_loss = None, None
         start_epoch = 1
 
     # Calculate the number of model parameters
@@ -100,6 +102,7 @@ if __name__ == '__main__':
     for k, v in model.named_parameters():
         n_params += v.reshape(-1).shape[0]
     print(f"Number of model parameters: {n_params}")
+
 
     # Epoch
     dataframe = None
@@ -222,10 +225,20 @@ if __name__ == '__main__':
             dataframe, epoch, train_p1Loss, train_p2Loss,
             val_p1Loss, val_p2Loss, val_p1MRE, val_p2MRE
         )
-        save_model(
-            os.path.join(TARGET_FOLDER, f"checkpoint_{epoch//50}.pth"),
-            epoch, model, optimizer
+        better_pred, larger_gap, saved_train_loss, saved_val_loss = is_worth_to_save(
+            train_loss=(train_p1Loss, train_p2Loss), val_loss=(val_p1Loss, val_p2Loss),
+            saved_train_loss=saved_train_loss, saved_val_loss=saved_val_loss
         )
+        if better_pred:
+            save_model(
+                os.path.join(TARGET_FOLDER, f"Checkpoint_{epoch//100}_BestPred.pth"),
+                epoch, model, optimizer, saved_train_loss, saved_val_loss
+            )
+        if larger_gap:
+            save_model(
+                os.path.join(TARGET_FOLDER, f"Checkpoint_{epoch//100}_LargestGap.pth"),
+                epoch, model, optimizer, saved_train_loss, saved_val_loss
+            )
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")

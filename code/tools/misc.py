@@ -19,12 +19,14 @@ def set_seed(seed):
     return
 
 
-def save_model(path:str, epoch:int, model:torch.nn.Module, optimizer:torch.optim.Optimizer):
+def save_model(path:str, epoch:int, model:torch.nn.Module, optimizer:torch.optim.Optimizer, train_loss:list=None, val_loss:list=None):
     print("Saving model..")
     save_dict = {
         "model": model.state_dict(),
         "epoch": epoch,
-        "optimizer": optimizer.state_dict()
+        "optimizer": optimizer.state_dict(),
+        "train_loss": train_loss,
+        "val_loss": val_loss
     }
     torch.save(save_dict, path)
 
@@ -58,6 +60,43 @@ def get_MRE(pred_coords:torch.Tensor, label_coords:torch.Tensor):
     diff_coords = torch.pow(diff_coords, 0.5)
     mre = torch.sum(diff_coords).cpu() / num_of_keypoints
     return mre.item()
+
+
+def is_worth_to_save(train_loss:tuple, val_loss:tuple, saved_train_loss:list, saved_val_loss:list):
+    """
+    Parameters:
+    ---
+        - `train_loss: (pred1_loss, pred2_loss)`
+        - `val_loss: (pred1_loss, pred2_loss)`
+        - `saved_train_loss: [lowest_train_loss(tuple), largest_gap_train_loss(tuple)]`
+        - `saved_val_loss: [lowest_val_loss(tuple), largest_gap_val_loss(tuple)]`
+
+    Returns:
+    ---
+        - `better pred acc: (bool)`
+        - `larger gap between pred1 & pred2: (bool)`
+        - `saved_train_loss: (list)`
+        - `saved_val_loss: (list)`
+    """
+    # No Saved model
+    if saved_train_loss is None:
+        return True, True, [train_loss, train_loss], [val_loss, val_loss]
+
+    # Init
+    better_pred = False
+    larger_gap = False
+
+    # Better pred(=pred1) acc
+    if train_loss[0] < saved_train_loss[0][0] and val_loss[0] < saved_val_loss[0][0] and val_loss[0] < val_loss[1]:
+        better_pred = True
+        saved_train_loss[0], saved_val_loss[0] = train_loss, val_loss
+
+    # Larger gap between pred1 & pred2  and  pred2 must better than pred1
+    if (val_loss[0] - val_loss[1]) < (saved_val_loss[1][0] - saved_val_loss[1][1]) and val_loss[1] < saved_val_loss[0][0]:
+        larger_gap = True
+        saved_train_loss[1], saved_val_loss[1] = train_loss, val_loss
+
+    return better_pred, larger_gap, saved_train_loss, saved_val_loss
 
 
 def write_log(
