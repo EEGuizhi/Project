@@ -124,7 +124,7 @@ class HintFusionLayer(nn.Module):
 
 
 class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
-    def __init__(self, image_size=(512, 256), num_of_keypoints=68, pretrained_model_path=None, use_iggnet=True):  # 假設傳入的config會是config.MODEL
+    def __init__(self, image_size=(512, 256), num_of_keypoints=68, pretrained_model_path=None, use_iggnet=True):
         super(IKEM, self).__init__()
         self.image_size = image_size
         self.use_iggnet = use_iggnet
