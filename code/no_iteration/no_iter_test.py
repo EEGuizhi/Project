@@ -62,12 +62,13 @@ if __name__ == '__main__':
     print(f"\nCheckpoint Model is trained after {epoch} epoch\n")
 
     # Testing
-    sample_count = 128
+    sample_count = 0
     Model_MRE = 0
     with torch.no_grad():
         model.eval()
         for i, (images, labels, hint_indexes, y_x_size) in enumerate(test_loader):
             # Init
+            sample_count += images.shape[0]
             images = images.to(device)
             labels = labels.to(device)
             y_x_size = y_x_size.to(device)
@@ -76,28 +77,19 @@ if __name__ == '__main__':
                 origSize_labels = torch.zeros_like(labels)
                 origSize_labels[s] = labels[s] * y_x_size[s] / image_size
 
-            labels_heatmap = heatmapMaker.coord2heatmap(labels).to(dtype=images.dtype)
+            outputs, aux_out = model(images)
+            keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.sigmoid())
 
-            # Simulate user interaction
-            for click in range(HINT_TIMES+1):
-                # Model forward
-                outputs, aux_out = model(images)
-                prev_pred = outputs.sigmoid()
+            # Get MRE
+            for s in range(images.shape[0]):
+                # Scale to original size
+                keypoints[s] = keypoints[s] * y_x_size[s] / image_size
 
-                keypoints = heatmapMaker.heatmap2sargmax_coord(prev_pred)
+                # Calc MRE
+                Model_MRE += get_MRE(keypoints[s], origSize_labels[s])
 
-                # Get MRE
-                for s in range(labels_heatmap.shape[0]):
-                    # Scale to original size
-                    keypoints[s] = keypoints[s] * y_x_size[s] / image_size
-
-                    # Calc MRE
-                    Model_MRE += get_MRE(keypoints[s], origSize_labels[s])
     # Outputs
-    print("[Model Revision]")
-    for i in range(HINT_TIMES+1):
-        print(f"Mean Radial Error: {Model_MRE / sample_count}")
-
+    print(f"Mean Radial Error: {Model_MRE / sample_count}")
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
