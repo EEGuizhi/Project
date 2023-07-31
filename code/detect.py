@@ -1,19 +1,21 @@
 import os
 import random
 import datetime
-import numpy as np
 import matplotlib.pyplot as plt
+from skimage.exposure import match_histograms
 
 import cv2
 import torch
+import numpy as np
 
 from model.model import IKEM
 from tools.heatmap_maker import HeatmapMaker
 
 USE_GUI = True
 
-INPUT_IMAGE_PATH = "jkpadWx0.jpeg"
-CHECKPOINT_PATH = "max_iter3_epoch51.pth"
+INPUT_IMAGE_PATH = ""
+HIST_MATCH_IMAGE = ""
+CHECKPOINT_PATH = ""
 HINT_TIMES = 10
 
 IMAGE_SIZE = (512, 256)
@@ -48,10 +50,11 @@ def show_pred_image(gray_image:np.ndarray, coords:torch.Tensor, click:int, save_
     i = 0
     for coord in coords:
         if i%4 == 0:
-            cv2.putText(image, f"{i//4 + 1}", (int(coord[1])+radius, int(coord[0])), cv2.FONT_HERSHEY_SIMPLEX, 1.5, COLOR_CODE[i//4], 2.5)
+            cv2.putText(image, f"{i//4 + 1}", (int(coord[1])+radius, int(coord[0])), cv2.FONT_HERSHEY_SIMPLEX, 1.5, COLOR_CODE[i//4], 2)
         cv2.circle(image, (int(coord[1]), int(coord[0])), radius, COLOR_CODE[i//4], -1)
         i += 1
     if save_folder != '': save_folder += '/'
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     cv2.imwrite(save_folder+"Pred_image_{}.jpg".format(click), image)
     return image if USE_GUI else None
 
@@ -102,8 +105,19 @@ if __name__ == '__main__':
     orig_image = cv2.imread(INPUT_IMAGE_PATH, cv2.IMREAD_GRAYSCALE)
     image_shape = orig_image.shape
     image = cv2.resize(orig_image, (IMAGE_SIZE[1], IMAGE_SIZE[0]))
-    image = np.stack([image, image, image], axis=0)
-    image = torch.tensor(image, dtype=torch.float).unsqueeze(dim=0).to(device)
+
+    if os.path.exists(HIST_MATCH_IMAGE):
+        # Match image
+        target_image = cv2.imread(HIST_MATCH_IMAGE, cv2.IMREAD_GRAYSCALE)
+        target_image = cv2.resize(target_image, (IMAGE_SIZE[1], IMAGE_SIZE[0]))
+        matched_image = match_histograms(
+            np.stack([image, image, image], axis=-1),
+            np.stack([target_image, target_image, target_image], axis=-1)
+        )
+        image = torch.tensor(matched_image, dtype=torch.float, device=device).permute(2, 0, 1).unsqueeze(dim=0)
+    else:
+        image = torch.tensor(image, dtype=torch.float, device=device)
+        image = torch.stack([image, image, image]).unsqueeze(dim=0)
     image = image / 255.0 * 2 - 1  # 0~255 to -1~1
 
     # Init other inputs
