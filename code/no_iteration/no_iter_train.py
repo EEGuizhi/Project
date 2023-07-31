@@ -21,6 +21,7 @@ IMAGE_ROOT = ""
 FILE_PATH = "./dataset/all_data.json"
 PRETRAINED_MODEL_PATH = "./pretrained_model/hrnetv2_w32_imagenet_pretrained.pth"
 CHECKPOINT_PATH = ""
+TARGET_FOLDER = ""
 
 # Basic Settings
 IMAGE_SIZE = (512, 256)
@@ -30,7 +31,7 @@ NUM_OF_KEYPOINTS = 68
 USE_CUSTOM_LOSS = False
 
 # Training Settings
-EPOCH = 300
+EPOCH = 249
 BATCH_SIZE = 8
 LR = 1e-3
 
@@ -72,15 +73,15 @@ if __name__ == '__main__':
     if CHECKPOINT_PATH is not None:
         print("Loading model parameters...")
         checkpoint = torch.load(CHECKPOINT_PATH)
+        start_epoch = checkpoint["epoch"] + 1
         model_param = checkpoint["model"]
         model.load_state_dict(model_param)
+        optimizer_param = checkpoint["optimizer"]
+        optimizer.load_state_dict(optimizer_param)
         try:
-            start_epoch = checkpoint["epoch"] + 1
-            optimizer_param = checkpoint["optimizer"]
-            optimizer.load_state_dict(optimizer_param)
+            saved_train_loss, saved_val_loss = checkpoint["train_loss"], checkpoint["val_loss"]
         except:
-            print("Load optimizer state dict failed..")
-            start_epoch = 1
+            saved_train_loss, saved_val_loss = None, None
         del model_param, optimizer_param, checkpoint
     else:
         start_epoch = 1
@@ -153,7 +154,15 @@ if __name__ == '__main__':
             dataframe, epoch, train_loss, None,
             val_loss, None, val_MRE, None
         )
-        save_model("checkpoint_{}.pth".format(epoch//50), epoch, model, optimizer)
+        better_pred, larger_gap, saved_train_loss, saved_val_loss = is_worth_to_save(
+            train_loss=(train_loss, None), val_loss=(val_loss, None),
+            saved_train_loss=saved_train_loss, saved_val_loss=saved_val_loss
+        )
+        if better_pred:
+            save_model(
+                os.path.join(TARGET_FOLDER, f"checkpoint_{epoch//50}.pth"),
+                epoch, model, optimizer, saved_train_loss, saved_val_loss
+            )
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
