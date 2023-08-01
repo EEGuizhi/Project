@@ -46,6 +46,7 @@ if __name__ == '__main__':
     test_loader = torch.utils.data.DataLoader(test_set, BATCH_SIZE, shuffle=True, collate_fn=custom_collate_fn)
 
     # Initialize
+    print(f"\nUsing Model: {MODELS[USE_MODEL]}")
     print("Initialize model...")
     if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
         model = IKEM(pretrained_model_path=None).to(device)

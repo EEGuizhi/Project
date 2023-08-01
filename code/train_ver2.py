@@ -79,6 +79,7 @@ if __name__ == '__main__':
 
 
     # Initialize
+    print(f"\nUsing Model: {MODELS[USE_MODEL]}")
     print("Initialize model...")
     if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
         model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
