@@ -112,11 +112,12 @@ class UNet_IKEM(nn.Module):
     def __init__(self, image_size=(512, 256), num_of_keypoints=68, bilinear=False, use_iggnet=True):
         super(UNet_IKEM, self).__init__()
         self.n_channels = 3
+        self.image_size = image_size
         self.n_classes = num_of_keypoints
         self.bilinear = bilinear
         self.use_iggnet = use_iggnet
 
-        if use_iggnet: self.iggnet = IGGNet(64, 64, 64)
+        if use_iggnet: self.iggnet = IGGNet(64, 64, 68)
         self.hint_fusion_layer = HintFusionLayer(3, num_of_keypoints*2, 64)
 
         self.down1 = (Down(64, 128))
@@ -131,7 +132,7 @@ class UNet_IKEM(nn.Module):
         self.outc = (OutConv(64, num_of_keypoints))
 
     def forward(self, hint_heatmap:torch.Tensor, prev_heatmap:torch.Tensor, input_image:torch.Tensor):
-        x1 = self.hint_fusion_layer(hint_heatmap, prev_heatmap, input_image)
+        x1 = self.hint_fusion_layer(input_image, hint_heatmap, prev_heatmap)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
@@ -142,5 +143,6 @@ class UNet_IKEM(nn.Module):
         x = self.up4(x, x1)
         if self.use_iggnet:
             x = self.iggnet(hint_heatmap, x1, x)
-        logits = self.outc(x)
+        x = self.outc(x)
+        logits = F.interpolate(x, size=self.image_size, mode='bilinear', align_corners=True)
         return logits
