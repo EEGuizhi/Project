@@ -87,7 +87,7 @@ def is_worth_to_save(train_loss:tuple, val_MRE:tuple, saved_train_loss:list, sav
     larger_gap = False
 
     # Better pred(=pred1) acc
-    if train_loss[0] < saved_train_loss[0][0] and val_MRE[0] < saved_val_MRE[0][0] and val_MRE[0] < val_MRE[1]:
+    if train_loss[0] < saved_train_loss[0][0] and val_MRE[0] < saved_val_MRE[0][0] and val_MRE[0] > val_MRE[1]:
         better_pred = True
         saved_train_loss[0], saved_val_MRE[0] = train_loss, val_MRE
 
