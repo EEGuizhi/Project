@@ -23,6 +23,10 @@ simulate user interaction (update hint heatmap) in each iteration.
 """
 
 
+# Model
+MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
+USE_MODEL = 0
+
 # Path Settings
 IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
 FILE_PATH = "./dataset/all_data.json"
@@ -44,10 +48,6 @@ HINT_TRAINING_AFTER_EPOCH = 20
 EPOCH = 199
 BATCH_SIZE = 8
 LR = 1e-3
-
-# Model
-MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
-USE_MODEL = 0
 
 
 if __name__ == '__main__':

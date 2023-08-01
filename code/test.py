@@ -5,16 +5,23 @@ import torch
 import albumentations as A  # keypoints_augmentation：https://albumentations.ai/docs/getting_started/keypoints_augmentation
 
 from model.model import IKEM
+from model.unet_IKEM import UNet_IKEM
 from tools.dataset import SpineDataset
 from tools.heatmap_maker import HeatmapMaker
 from tools.dataset import custom_collate_fn
 from tools.misc import *
 
 
+# Model
+MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
+USE_MODEL = 0
+
+# Path settings
 IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
 CHECKPOINT_PATH = ""
 FILE_PATH = "./dataset/all_data.json"
 
+# Basic settings
 HINT_TIMES = 5
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
@@ -40,7 +47,10 @@ if __name__ == '__main__':
 
     # Initialize
     print("Initialize model...")
-    model = IKEM(pretrained_model_path=None).to(device)
+    if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+        model = IKEM(pretrained_model_path=None).to(device)
+    elif MODELS[USE_MODEL] == "UNet_IKEM":
+        model = UNet_IKEM().to(device)
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
 
     if CHECKPOINT_PATH is not None:
@@ -90,7 +100,10 @@ if __name__ == '__main__':
             manual_revision = [[] for s in range(labels.shape[0])]
             for click in range(HINT_TIMES+1):
                 # Model forward
-                outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+                    outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                elif MODELS[USE_MODEL] == "UNet_IKEM":
+                    outputs = model(hint_heatmap, prev_pred, images)
                 prev_pred = outputs.sigmoid()
 
                 pred_coords = heatmapMaker.heatmap2sargmax_coord(prev_pred)
