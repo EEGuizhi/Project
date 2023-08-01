@@ -92,7 +92,8 @@ def is_worth_to_save(train_loss:tuple, val_MRE:tuple, saved_train_loss:list, sav
         saved_train_loss[0], saved_val_MRE[0] = train_loss, val_MRE
 
     # Larger gap between pred1 & pred2  and  pred2 must better than pred1
-    if (val_MRE[0] - val_MRE[1]) > (saved_val_MRE[1][0] - saved_val_MRE[1][1]) and val_MRE[1] < saved_val_MRE[0][0]:
+    if  (val_MRE[0] - val_MRE[1]) > (saved_val_MRE[1][0] - saved_val_MRE[1][1]) and val_MRE[1] < saved_val_MRE[0][0] or \
+        (val_MRE[0] - val_MRE[1]) > (saved_val_MRE[1][0] - saved_val_MRE[1][1]) and val_MRE[1] < saved_val_MRE[1][1]:
         larger_gap = True
         saved_train_loss[1], saved_val_MRE[1] = train_loss, val_MRE
 
