@@ -79,11 +79,12 @@ if __name__ == '__main__':
         optimizer_param = checkpoint["optimizer"]
         optimizer.load_state_dict(optimizer_param)
         try:
-            saved_train_loss, saved_val_loss = checkpoint["train_loss"], checkpoint["val_loss"]
+            saved_train_loss, saved_val_MRE = checkpoint["train_loss"], checkpoint["val_MRE"]
         except:
-            saved_train_loss, saved_val_loss = None, None
+            saved_train_loss, saved_val_MRE = None, None
         del model_param, optimizer_param, checkpoint
     else:
+        saved_train_loss, saved_val_MRE = None, None
         start_epoch = 1
 
     # Calculate the number of model parameters
@@ -154,15 +155,19 @@ if __name__ == '__main__':
             dataframe, epoch, train_loss, None,
             val_loss, None, val_MRE, None
         )
-        better_pred, larger_gap, saved_train_loss, saved_val_loss = is_worth_to_save(
-            train_loss=(train_loss, None), val_loss=(val_loss, None),
-            saved_train_loss=saved_train_loss, saved_val_loss=saved_val_loss
+        better_pred, larger_gap, saved_train_loss, saved_val_MRE = is_worth_to_save(
+            train_loss=(train_loss, None), val_MRE=(val_MRE, None),
+            saved_train_loss=saved_train_loss, saved_val_MRE=saved_val_MRE
         )
         if better_pred:
             save_model(
-                os.path.join(TARGET_FOLDER, f"checkpoint_{epoch//50}.pth"),
-                epoch, model, optimizer, saved_train_loss, saved_val_loss
+                os.path.join(TARGET_FOLDER, f"Checkpoint_HRNetOCR_BestPred.pth"),
+                epoch, model, optimizer, saved_train_loss, saved_val_MRE, "BestPred"
             )
+        save_model(
+            os.path.join(TARGET_FOLDER, f"Checkpoint_HRNetOCR_Newest.pth"),
+            epoch, model, optimizer, saved_train_loss, saved_val_MRE
+        )
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")

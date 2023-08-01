@@ -9,6 +9,7 @@ import torch.nn as nn
 import albumentations as A  # keypoints_augmentation：https://albumentations.ai/docs/getting_started/keypoints_augmentation
 
 from model.model import IKEM
+from model.unet_IKEM import UNet_IKEM
 from tools.dataset import SpineDataset
 from tools.heatmap_maker import HeatmapMaker
 from tools.loss import CustomLoss
@@ -44,6 +45,10 @@ EPOCH = 199
 BATCH_SIZE = 8
 LR = 1e-3
 
+# Model
+MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
+USE_MODEL = 0
+
 
 if __name__ == '__main__':
     # Program Start
@@ -75,7 +80,10 @@ if __name__ == '__main__':
 
     # Initialize
     print("Initialize model...")
-    model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
+    if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+        model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
+    elif MODELS[USE_MODEL] == "UNet_IKEM":
+        model = UNet_IKEM().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
     loss_func = CustomLoss(use_coord_loss=False, use_morph_loss=True) if USE_CUSTOM_LOSS else nn.BCELoss()
@@ -89,12 +97,12 @@ if __name__ == '__main__':
         optimizer_param = checkpoint["optimizer"]
         optimizer.load_state_dict(optimizer_param)
         try:
-            saved_train_loss, saved_val_loss = checkpoint["train_loss"], checkpoint["val_loss"]
+            saved_train_loss, saved_val_MRE = checkpoint["train_loss"], checkpoint["val_MRE"]
         except:
-            saved_train_loss, saved_val_loss = None, None
+            saved_train_loss, saved_val_MRE = None, None
         del model_param, optimizer_param, checkpoint
     else:
-        saved_train_loss, saved_val_loss = None, None
+        saved_train_loss, saved_val_MRE = None, None
         start_epoch = 1
 
     # Calculate the number of model parameters
@@ -140,7 +148,10 @@ if __name__ == '__main__':
             with torch.no_grad():
                 for iter in range(iter_times):
                     # Model forward
-                    outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                    if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+                        outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                    elif MODELS[USE_MODEL] == "UNet_IKEM":
+                        outputs = model(hint_heatmap, prev_pred, images)
                     prev_pred = outputs.detach().sigmoid()
 
                     # Inputs update
@@ -151,13 +162,16 @@ if __name__ == '__main__':
 
             # Train model
             model.train()
-            outputs, aux_out = model(hint_heatmap, prev_pred, images)  # Model forward
+            if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+                outputs, aux_out = model(hint_heatmap, prev_pred, images)
+            elif MODELS[USE_MODEL] == "UNet_IKEM":
+                outputs = model(hint_heatmap, prev_pred, images)
 
             # Update Model
             pred_heatmap = outputs.sigmoid()
             pred_coord = heatmapMaker.heatmap2sargmax_coord(pred_heatmap)
             loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
-            loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
+            if MODELS[USE_MODEL] == "HRNetOCR_IKEM": loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
             optimizer.zero_grad()
             loss.backward()
@@ -191,13 +205,16 @@ if __name__ == '__main__':
                 prev_pred = torch.zeros_like(hint_heatmap)
 
                 for click in range(2):
-                    outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                    if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+                        outputs, aux_out = model(hint_heatmap, prev_pred, images)
+                    elif MODELS[USE_MODEL] == "UNet_IKEM":
+                        outputs = model(hint_heatmap, prev_pred, images)
                     prev_pred = outputs.detach().sigmoid()
 
                     pred_heatmap = outputs.sigmoid()
                     pred_coord = heatmapMaker.heatmap2sargmax_coord(prev_pred)
                     loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
-                    loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
+                    if MODELS[USE_MODEL] == "HRNetOCR_IKEM": loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
                     # Inputs update
                     for s in range(hint_heatmap.shape[0]):  # s = idx of samples
@@ -225,20 +242,24 @@ if __name__ == '__main__':
             dataframe, epoch, train_p1Loss, train_p2Loss,
             val_p1Loss, val_p2Loss, val_p1MRE, val_p2MRE
         )
-        better_pred, larger_gap, saved_train_loss, saved_val_loss = is_worth_to_save(
-            train_loss=(train_p1Loss, train_p2Loss), val_loss=(val_p1Loss, val_p2Loss),
-            saved_train_loss=saved_train_loss, saved_val_loss=saved_val_loss
+        better_pred, larger_gap, saved_train_loss, saved_val_MRE = is_worth_to_save(
+            train_loss=(train_p1Loss, train_p2Loss), val_MRE=(val_p1MRE, val_p2MRE),
+            saved_train_loss=saved_train_loss, saved_val_MRE=saved_val_MRE
         )
         if better_pred:
             save_model(
-                os.path.join(TARGET_FOLDER, f"Checkpoint_{epoch//100}_BestPred.pth"),
-                epoch, model, optimizer, saved_train_loss, saved_val_loss
+                os.path.join(TARGET_FOLDER, f"Checkpoint_BestPred.pth"),
+                epoch, model, optimizer, saved_train_loss, saved_val_MRE, "BestPred"
             )
         if larger_gap:
             save_model(
-                os.path.join(TARGET_FOLDER, f"Checkpoint_{epoch//100}_LargestGap.pth"),
-                epoch, model, optimizer, saved_train_loss, saved_val_loss
+                os.path.join(TARGET_FOLDER, f"Checkpoint_LargestGap.pth"),
+                epoch, model, optimizer, saved_train_loss, saved_val_MRE, "LargestGap"
             )
+        save_model(
+            os.path.join(TARGET_FOLDER, f"Checkpoint_Newest.pth"),
+            epoch, model, optimizer, saved_train_loss, saved_val_MRE
+        )
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
