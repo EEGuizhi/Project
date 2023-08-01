@@ -1,53 +1,6 @@
 """ Full assembly of the parts to form the complete network """
 from .unet_parts import *
 
-
-class UNet(nn.Module):
-    def __init__(self, n_channels, n_classes, bilinear=False):
-        super(UNet, self).__init__()
-        self.n_channels = n_channels
-        self.n_classes = n_classes
-        self.bilinear = bilinear
-
-        self.inc = (DoubleConv(n_channels, 64))
-        self.down1 = (Down(64, 128))
-        self.down2 = (Down(128, 256))
-        self.down3 = (Down(256, 512))
-        factor = 2 if bilinear else 1
-        self.down4 = (Down(512, 1024 // factor))
-        self.up1 = (Up(1024, 512 // factor, bilinear))
-        self.up2 = (Up(512, 256 // factor, bilinear))
-        self.up3 = (Up(256, 128 // factor, bilinear))
-        self.up4 = (Up(128, 64, bilinear))
-        self.outc = (OutConv(64, n_classes))
-
-    def forward(self, x):
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        x = self.up1(x5, x4)
-        x = self.up2(x, x3)
-        x = self.up3(x, x2)
-        x = self.up4(x, x1)
-        logits = self.outc(x)
-        return logits
-
-    def use_checkpointing(self):
-        self.inc = torch.utils.checkpoint(self.inc)
-        self.down1 = torch.utils.checkpoint(self.down1)
-        self.down2 = torch.utils.checkpoint(self.down2)
-        self.down3 = torch.utils.checkpoint(self.down3)
-        self.down4 = torch.utils.checkpoint(self.down4)
-        self.up1 = torch.utils.checkpoint(self.up1)
-        self.up2 = torch.utils.checkpoint(self.up2)
-        self.up3 = torch.utils.checkpoint(self.up3)
-        self.up4 = torch.utils.checkpoint(self.up4)
-        self.outc = torch.utils.checkpoint(self.outc)
-
-
-
 class ConvBlocks(nn.Module):
     def __init__(self, in_ch, channels, kernel_sizes=None, strides=None, dilations=None, paddings=None, BatchNorm=nn.BatchNorm2d):
         super(ConvBlocks, self).__init__()
@@ -110,14 +63,8 @@ class IGGNet(nn.Module):  # Interaction-Guided Gating Network (Fc另外寫)
             f = f.mean(-1, keepdim=True).mean(-2, keepdim=True)
         f = self.conv1(f).relu() 
         f = self.conv2(f)
-        if self.SE_softmax:  # 得到架構中的A
-            f = f.softmax(1)
-        else:
-            f = f.sigmoid()
-        if Fc is not None:
-            return f * Fc
-        else:
-            return f    
+        f = f.softmax(1) if self.SE_softmax else f.sigmoid()  # 得到架構中的A
+        return (f * Fc) if Fc is not None else f
 
 class HintFusionLayer(nn.Module):
     def __init__(self, im_ch:int, in_ch:int, out_ch:int=64, ScaleLayer:bool=True):
@@ -161,9 +108,39 @@ class HintFusionLayer(nn.Module):
         return f
 
 
-
 class UNet_IKEM(nn.Module):
-    def __init__(self, image_size=(512, 256), num_of_keypoints=68, pretrained_model_path=None, use_iggnet=True):
+    def __init__(self, image_size=(512, 256), num_of_keypoints=68, bilinear=False, use_iggnet=True):
         super(UNet_IKEM, self).__init__()
-        self.unet = UNet(3, num_of_keypoints, )
-        
+        self.n_channels = 3
+        self.n_classes = num_of_keypoints
+        self.bilinear = bilinear
+        self.use_iggnet = use_iggnet
+
+        if use_iggnet: self.iggnet = IGGNet(64, 64, 64)
+        self.hint_fusion_layer = HintFusionLayer(3, num_of_keypoints*2, 64)
+
+        self.down1 = (Down(64, 128))
+        self.down2 = (Down(128, 256))
+        self.down3 = (Down(256, 512))
+        factor = 2 if bilinear else 1
+        self.down4 = (Down(512, 1024 // factor))
+        self.up1 = (Up(1024, 512 // factor, bilinear))
+        self.up2 = (Up(512, 256 // factor, bilinear))
+        self.up3 = (Up(256, 128 // factor, bilinear))
+        self.up4 = (Up(128, 64, bilinear))
+        self.outc = (OutConv(64, num_of_keypoints))
+
+    def forward(self, hint_heatmap:torch.Tensor, prev_heatmap:torch.Tensor, input_image:torch.Tensor):
+        x1 = self.hint_fusion_layer(hint_heatmap, prev_heatmap, input_image)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        x4 = self.down3(x3)
+        x5 = self.down4(x4)
+        x = self.up1(x5, x4)
+        x = self.up2(x, x3)
+        x = self.up3(x, x2)
+        x = self.up4(x, x1)
+        if self.use_iggnet:
+            x = self.iggnet(hint_heatmap, x1, x)
+        logits = self.outc(x)
+        return logits
