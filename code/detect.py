@@ -9,14 +9,21 @@ import torch
 import numpy as np
 
 from model.model import IKEM
+from model.unet_IKEM import UNet_IKEM
 from tools.heatmap_maker import HeatmapMaker
 
+
 USE_GUI = True
+
+
+# Model
+MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
+USE_MODEL = 0
 
 INPUT_IMAGE_PATH = ""
 HIST_MATCH_IMAGE = ""
 CHECKPOINT_PATH = ""
-HINT_TIMES = 10
+HINT_TIMES = 15
 
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
@@ -85,7 +92,10 @@ if __name__ == '__main__':
 
     # Initialize
     print("Initialize model...")
-    model = IKEM(pretrained_model_path=None).to(device)
+    if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+        model = IKEM(pretrained_model_path=None).to(device)
+    elif MODELS[USE_MODEL] == "UNet_IKEM":
+        model = UNet_IKEM().to(device)
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
 
     if os.path.exists(CHECKPOINT_PATH):
@@ -114,6 +124,7 @@ if __name__ == '__main__':
             np.stack([image, image, image], axis=-1),
             np.stack([target_image, target_image, target_image], axis=-1)
         )
+        cv2.imwrite("matched_input_image.jpg", matched_image)
         image = torch.tensor(matched_image, dtype=torch.float, device=device).permute(2, 0, 1).unsqueeze(dim=0)
     else:
         image = torch.tensor(image, dtype=torch.float, device=device)
@@ -133,9 +144,12 @@ if __name__ == '__main__':
     with torch.no_grad():
         manual_revision = []
         model.eval()
-        for click in range(HINT_TIMES):
+        for click in range(HINT_TIMES+1):
             # Model forward
-            outputs, aux_out = model(hint_heatmap, prev_pred, image)
+            if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
+                outputs, aux_out = model(hint_heatmap, prev_pred, image)
+            elif MODELS[USE_MODEL] == "UNet_IKEM":
+                outputs = model(hint_heatmap, prev_pred, image)
 
             # Plot keypoints
             keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
@@ -145,40 +159,41 @@ if __name__ == '__main__':
                 keypoints[item["index"], 0], keypoints[item["index"], 1] = item["coord"][0], item["coord"][1]
             pred_image = show_pred_image(orig_image, keypoints, click, target_folder)
 
-            if USE_GUI:
-                fig = plt.figure("Pred image of click {}".format(click))
-                plt.imshow(pred_image)
-                plt.xticks([]), plt.yticks([])
+            if click < HINT_TIMES:
+                if USE_GUI:
+                    fig = plt.figure("Pred image of click {}".format(click))
+                    plt.imshow(pred_image)
+                    plt.xticks([]), plt.yticks([])
 
-                print("\nPlease click the point you would like to correct First")
-                print("then click the new coord of that point on picture.\n")
-                fig.canvas.mpl_connect('button_press_event', onclick)
-                plt.show()
+                    print("\nPlease click the point you would like to correct First")
+                    print("then click the new coord of that point on picture.\n")
+                    fig.canvas.mpl_connect('button_press_event', onclick)
+                    plt.show()
 
-                # Find closest point index
-                fix_coord = fix_coord.repeat(keypoints.shape[0], 1)
-                keypoints = keypoints.cpu() - fix_coord
-                index = torch.argmin(torch.sum(torch.pow(keypoints, 2), dim=-1)).item()
-                coord = true_coord
+                    # Find closest point index
+                    fix_coord = fix_coord.repeat(keypoints.shape[0], 1)
+                    keypoints = keypoints.cpu() - fix_coord
+                    index = torch.argmin(torch.sum(torch.pow(keypoints, 2), dim=-1)).item()
+                    coord = true_coord
 
-                fix_coord = None
-            else:
-                # User interaction
-                index = int(input("\nPlease input the index of keypoints you want to fix："))
-                nums = input("Please input the new coord y, x：").split(',')[0:2]
-                coord = [int(num) for num in nums]
+                    fix_coord = None
+                else:
+                    # User interaction
+                    index = int(input("\nPlease input the index of keypoints you want to fix："))
+                    nums = input("Please input the new coord y, x：").split(',')[0:2]
+                    coord = [int(num) for num in nums]
 
-            manual_revision.append({
-                "index": index,
-                "coord": coord
-            })
-            coord = torch.tensor(coord, dtype=torch.float).unsqueeze(dim=0).unsqueeze(dim=0)
-            coord[0, 0, 0] = coord[0, 0, 0] * IMAGE_SIZE[0] / image_shape[0]
-            coord[0, 0, 1] = coord[0, 0, 1] * IMAGE_SIZE[1] / image_shape[1]
+                manual_revision.append({
+                    "index": index,
+                    "coord": coord
+                })
+                coord = torch.tensor(coord, dtype=torch.float).unsqueeze(dim=0).unsqueeze(dim=0)
+                coord[0, 0, 0] = coord[0, 0, 0] * IMAGE_SIZE[0] / image_shape[0]
+                coord[0, 0, 1] = coord[0, 0, 1] * IMAGE_SIZE[1] / image_shape[1]
 
-            # Inputs update
-            prev_pred = outputs.detach().sigmoid()
-            hint_heatmap[0, index] = heatmapMaker.coord2heatmap(coord)[0, 0]
+                # Inputs update
+                prev_pred = outputs.detach().sigmoid()
+                hint_heatmap[0, index] = heatmapMaker.coord2heatmap(coord)[0, 0]
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
