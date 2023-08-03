@@ -46,3 +46,11 @@
 
 - 承上，在決定總提示次數後，<br>
 每次要修正(提示)的關鍵點，為偵測結果「最差」或「前十差隨機抽1個」的關鍵點。
+
+
+### **已訓練模型參數檔：**
+- **UNet IKEM** (with Interaction-Guided Gating Network)：<br>
+https://www.dropbox.com/scl/fi/0xehqmj69841l4n62a9ex/UNet_IKEM_epoch121.pth?rlkey=fyhtdnwrid6nutdbh6f39a2yi&dl=0
+
+- **HRNet+OCR IKEM** (with Interaction-Guided Gating Network)：<br>
+https://www.dropbox.com/scl/fi/ffe94vxksm6ptnlr7qone/HRNetOCR_IKEM_epoch110.pth?rlkey=ogf5aq6xi1uhkx5l5ph73voso&dl=0
