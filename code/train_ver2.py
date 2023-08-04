@@ -26,6 +26,7 @@ simulate user interaction (update hint heatmap) in each iteration.
 # Model
 MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
 USE_MODEL = 0
+WITH_IGGN = True  # interaction-guided dating network
 
 # Path Settings
 IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
@@ -82,9 +83,9 @@ if __name__ == '__main__':
     print(f"\nUsing Model: {MODELS[USE_MODEL]}")
     print("Initialize model...")
     if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
-        model = IKEM(pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
+        model = IKEM(use_iggnet=WITH_IGGN, pretrained_model_path=PRETRAINED_MODEL_PATH).to(device)
     elif MODELS[USE_MODEL] == "UNet_IKEM":
-        model = UNet_IKEM().to(device)
+        model = UNet_IKEM(use_iggnet=WITH_IGGN).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92ml-note-sgd-momentum-adagrad-adam-optimizer-f20568c968db
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
     loss_func = CustomLoss(use_coord_loss=False, use_morph_loss=True) if USE_CUSTOM_LOSS else nn.BCELoss()

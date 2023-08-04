@@ -15,6 +15,7 @@ from tools.misc import *
 # Model
 MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
 USE_MODEL = 0
+WITH_IGGN = True
 
 # Path settings
 IMAGE_ROOT = "./dataset/dataset16/boostnet_labeldata"
@@ -49,9 +50,9 @@ if __name__ == '__main__':
     print(f"\nUsing Model: {MODELS[USE_MODEL]}")
     print("Initialize model...")
     if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
-        model = IKEM(pretrained_model_path=None).to(device)
+        model = IKEM(use_iggnet=WITH_IGGN, pretrained_model_path=None).to(device)
     elif MODELS[USE_MODEL] == "UNet_IKEM":
-        model = UNet_IKEM().to(device)
+        model = UNet_IKEM(use_iggnet=WITH_IGGN).to(device)
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
 
     if CHECKPOINT_PATH is not None:

@@ -19,6 +19,7 @@ USE_GUI = True
 # Model
 MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
 USE_MODEL = 0
+WITH_IGGN = True
 
 INPUT_IMAGE_PATH = ""
 HIST_MATCH_IMAGE = ""
@@ -93,9 +94,9 @@ if __name__ == '__main__':
     # Initialize
     print("Initialize model...")
     if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
-        model = IKEM(pretrained_model_path=None).to(device)
+        model = IKEM(use_iggnet=WITH_IGGN, pretrained_model_path=None).to(device)
     elif MODELS[USE_MODEL] == "UNet_IKEM":
-        model = UNet_IKEM().to(device)
+        model = UNet_IKEM(use_iggnet=WITH_IGGN).to(device)
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
 
     if os.path.exists(CHECKPOINT_PATH):
