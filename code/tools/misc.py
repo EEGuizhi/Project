@@ -100,6 +100,18 @@ def is_worth_to_save(train_loss:tuple, val_MRE:tuple, saved_train_loss:list, sav
     return better_pred, larger_gap, saved_train_loss, saved_val_MRE
 
 
+def early_stop(val_MRE, lowest_MRE, epoch_count):
+    if epoch_count is None: epoch_count = 0
+    if lowest_MRE is None: lowest_MRE = val_MRE
+    if val_MRE <= lowest_MRE:
+        return False, val_MRE, 0
+    else:
+        if epoch_count >= 30:
+            return True, lowest_MRE, epoch_count+1
+        else:
+            return False, lowest_MRE, epoch_count+1
+
+
 def write_log(
         file_path:str, dataframe:pd.DataFrame, epoch:int, train_P1Loss:float, train_P2Loss:float,
         val_P1Loss:float, val_P2Loss:float, val_P1MRE:float, val_P2MRE:float
