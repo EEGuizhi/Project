@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
 
     # Epoch
-    dataframe = None
+    dataframe, lowest_MRE, epoch_count = None, None, None
     for epoch in range(start_epoch, EPOCH+1):
         print(f"\n>> Epoch：{epoch}")
 
@@ -239,6 +239,7 @@ if __name__ == '__main__':
         print(f"Validation pred1 MRE = {round(val_p1MRE, 3)},  pred2 MRE = {round(val_p2MRE, 3)}")
 
         # Saving data
+        stop_training, lowest_MRE, epoch_count = early_stop(val_p2MRE, lowest_MRE, epoch_count)
         dataframe = write_log(
             os.path.join(TARGET_FOLDER, f"Training_iter_Log_{date}.csv"),
             dataframe, epoch, train_p1Loss, train_p2Loss,
@@ -262,6 +263,10 @@ if __name__ == '__main__':
             os.path.join(TARGET_FOLDER, f"Checkpoint_Newest.pth"),
             epoch, model, optimizer, saved_train_loss, saved_val_MRE
         )
+
+        if stop_training is True:
+            print(f"Early stop at epoch {epoch}")
+            break
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
