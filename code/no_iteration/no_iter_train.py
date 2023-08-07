@@ -94,7 +94,7 @@ if __name__ == '__main__':
     print(f"Number of model parameters: {n_params}")
 
     # Epoch
-    dataframe = None
+    dataframe, lowest_MRE, epoch_count = None, None, None
     for epoch in range(start_epoch, EPOCH+1):
         print(f"\n>> Epoch：{epoch}")
 
@@ -144,12 +144,13 @@ if __name__ == '__main__':
                 val_loss += loss.item()
                 val_MRE += get_batch_MRE(pred_coord, labels).item()
 
-        val_loss += val_loss / len(val_loader)
-        val_MRE += val_MRE / len(val_loader)
+        val_loss = val_loss / len(val_loader)
+        val_MRE = val_MRE / len(val_loader)
         print(f"Validation Loss：{round(val_loss, 3)}")
         print(f"Validation MRE = {round(val_MRE, 3)}")
 
         # Saving data
+        stop_training, lowest_MRE, epoch_count = early_stop(val_MRE, lowest_MRE, epoch_count)
         dataframe = write_log(
             "Training_Log_{}.csv".format(date),
             dataframe, epoch, train_loss, None,
@@ -168,6 +169,10 @@ if __name__ == '__main__':
             os.path.join(TARGET_FOLDER, f"Checkpoint_HRNetOCR_Newest.pth"),
             epoch, model, optimizer, saved_train_loss, saved_val_MRE
         )
+
+        if stop_training is True:
+            print(f"Early stop at epoch {epoch}")
+            break
 
     # Program Ended
     print(f"\n>> End Program --- {datetime.datetime.now()} \n")
