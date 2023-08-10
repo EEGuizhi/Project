@@ -73,8 +73,9 @@ if __name__ == '__main__':
             labels = labels.to(device)
             y_x_size = y_x_size.to(device)
             image_size = torch.tensor(IMAGE_SIZE, device=device)
+
+            origSize_labels = torch.zeros_like(labels)
             for s in range(labels.shape[0]):  # get labels coord in original size
-                origSize_labels = torch.zeros_like(labels)
                 origSize_labels[s] = labels[s] * y_x_size[s] / image_size
 
             outputs, aux_out = model(images)
