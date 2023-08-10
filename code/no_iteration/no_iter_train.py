@@ -152,7 +152,7 @@ if __name__ == '__main__':
         # Saving data
         stop_training, lowest_MRE, epoch_count = early_stop(val_MRE, lowest_MRE, epoch_count)
         dataframe = write_log(
-            "Training_Log_{}.csv".format(date),
+            os.path.join(TARGET_FOLDER, f"Training_Log_{date}.csv"),
             dataframe, epoch, train_loss, None,
             val_loss, None, val_MRE, None
         )
