@@ -99,12 +99,12 @@ if __name__ == '__main__':
         optimizer_param = checkpoint["optimizer"]
         optimizer.load_state_dict(optimizer_param)
         try:
-            saved_train_loss, saved_val_MRE = checkpoint["train_loss"], checkpoint["val_MRE"]
+            lowest_MRE, epoch_count = checkpoint["lowest_MRE"], checkpoint["epoch_count"]
         except:
-            saved_train_loss, saved_val_MRE = None, None
+            lowest_MRE, epoch_count = None, None
         del model_param, optimizer_param, checkpoint
     else:
-        saved_train_loss, saved_val_MRE = None, None
+        lowest_MRE, epoch_count = None, None
         start_epoch = 1
 
     # Calculate the number of model parameters
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
 
     # Epoch
-    dataframe, lowest_MRE, epoch_count = None, None, None
+    dataframe = None
     for epoch in range(start_epoch, EPOCH+1):
         print(f"\n>> Epoch：{epoch}")
 
@@ -239,29 +239,21 @@ if __name__ == '__main__':
         print(f"Validation pred1 MRE = {round(val_p1MRE, 3)},  pred2 MRE = {round(val_p2MRE, 3)}")
 
         # Saving data
-        stop_training, lowest_MRE, epoch_count = early_stop(val_p2MRE, lowest_MRE, epoch_count)
         dataframe = write_log(
             os.path.join(TARGET_FOLDER, f"Training_iter_Log_{date}.csv"),
             dataframe, epoch, train_p1Loss, train_p2Loss,
             val_p1Loss, val_p2Loss, val_p1MRE, val_p2MRE
         )
-        better_pred, larger_gap, saved_train_loss, saved_val_MRE = is_worth_to_save(
-            train_loss=(train_p1Loss, train_p2Loss), val_MRE=(val_p1MRE, val_p2MRE),
-            saved_train_loss=saved_train_loss, saved_val_MRE=saved_val_MRE
-        )
-        if better_pred:
+        stop_training, lowest_MRE, epoch_count = early_stop(val_p2MRE, lowest_MRE, epoch_count)
+        is_best_pred = True if epoch_count == 0 else False
+        if is_best_pred:
             save_model(
                 os.path.join(TARGET_FOLDER, f"Checkpoint_BestPred.pth"),
-                epoch, model, optimizer, saved_train_loss, saved_val_MRE, "BestPred"
-            )
-        if larger_gap:
-            save_model(
-                os.path.join(TARGET_FOLDER, f"Checkpoint_LargestGap.pth"),
-                epoch, model, optimizer, saved_train_loss, saved_val_MRE, "LargestGap"
+                epoch, model, optimizer, lowest_MRE=lowest_MRE, epoch_count=epoch_count, msg="BestPred"
             )
         save_model(
             os.path.join(TARGET_FOLDER, f"Checkpoint_Newest.pth"),
-            epoch, model, optimizer, saved_train_loss, saved_val_MRE
+            epoch, model, optimizer, lowest_MRE=lowest_MRE, epoch_count=epoch_count
         )
 
         if stop_training is True:

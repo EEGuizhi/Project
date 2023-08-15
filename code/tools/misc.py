@@ -19,14 +19,19 @@ def set_seed(seed):
     return
 
 
-def save_model(path:str, epoch:int, model:torch.nn.Module, optimizer:torch.optim.Optimizer, train_loss:list=None, val_MRE:list=None, msg:str=""):
+def save_model(
+        path:str, epoch:int, model:torch.nn.Module, optimizer:torch.optim.Optimizer,
+        train_loss:list=None, val_MRE:list=None, lowest_MRE:float=None, epoch_count:int=None, msg:str=""
+    ):
     print(f"Saving {msg} model..")
     save_dict = {
         "model": model.state_dict(),
         "epoch": epoch,
         "optimizer": optimizer.state_dict(),
         "train_loss": train_loss,
-        "val_MRE": val_MRE
+        "val_MRE": val_MRE,
+        "lowest_MRE": lowest_MRE,
+        "epoch_count": epoch_count
     }
     torch.save(save_dict, path)
 
@@ -101,6 +106,11 @@ def is_worth_to_save(train_loss:tuple, val_MRE:tuple, saved_train_loss:list, sav
 
 
 def early_stop(val_MRE, lowest_MRE, epoch_count):
+    """
+    Returns:
+    ---
+        `stop_training`, `lowest_MRE`, `epoch_count`
+    """
     if epoch_count is None: epoch_count = 0
     if lowest_MRE is None: lowest_MRE = val_MRE
     if val_MRE <= lowest_MRE:

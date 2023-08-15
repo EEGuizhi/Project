@@ -163,7 +163,7 @@ if __name__ == '__main__':
         if better_pred:
             save_model(
                 os.path.join(TARGET_FOLDER, f"Checkpoint_HRNetOCR_BestPred.pth"),
-                epoch, model, optimizer, saved_train_loss, saved_val_MRE, "BestPred"
+                epoch, model, optimizer, saved_train_loss, saved_val_MRE, msg="BestPred"
             )
         save_model(
             os.path.join(TARGET_FOLDER, f"Checkpoint_HRNetOCR_Newest.pth"),
