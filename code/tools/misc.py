@@ -116,7 +116,7 @@ def early_stop(val_MRE, lowest_MRE, epoch_count):
     if val_MRE <= lowest_MRE:
         return False, val_MRE, 0
     else:
-        if epoch_count >= 30:
+        if epoch_count >= 40:
             return True, lowest_MRE, epoch_count+1
         else:
             return False, lowest_MRE, epoch_count+1
