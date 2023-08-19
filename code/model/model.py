@@ -138,7 +138,8 @@ class IKEM(nn.Module):  # Interaction Keypoint Estimation Model
 
         # Interaction-Guided Gating Network
         last_inp_channels = self.hrnet.last_inp_channels
-        self.iggnet = IGGNet(in_ch=256, out_ch=last_inp_channels, num_classes=num_of_keypoints, SE_maxpool=True, SE_softmax=False)
+        if use_iggnet:
+            self.iggnet = IGGNet(in_ch=256, out_ch=last_inp_channels, num_classes=num_of_keypoints, SE_maxpool=True, SE_softmax=False)
 
         # Object-Contextual Representations
         ocr_mid_channels = 2 * ocr_width
