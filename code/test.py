@@ -60,7 +60,7 @@ if __name__ == '__main__':
         checkpoint = torch.load(CHECKPOINT_PATH)
         epoch = checkpoint["epoch"]
         model_param = checkpoint["model"]
-        model.load_state_dict(model_param)
+        model.load_state_dict(model_param, strict=False)
         del model_param, checkpoint
     else:
         print("Need checkpoint file to start testing..")
