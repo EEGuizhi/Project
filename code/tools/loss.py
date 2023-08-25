@@ -1,6 +1,7 @@
 import torch
-import torch.nn as nn
 import numpy as np
+import torch.nn as nn
+import json
 
 class CustomLoss(nn.Module):
     def __init__(self, use_coord_loss, use_morph_loss):
@@ -10,6 +11,12 @@ class CustomLoss(nn.Module):
         self.bce_loss = nn.BCELoss()
         self.mae_criterion = nn.L1Loss()
         self.angle_criterion = nn.CosineEmbeddingLoss()
+
+        if use_morph_loss:
+            with open("code\morph_pairs.json") as f:
+                morph_pairs = json.load(f)
+            self.dist_pairs = np.array(morph_pairs[0])
+            self.angle_pairs = np.array(morph_pairs[1])
 
     def forward(self, pred_coord, pred_heatmap, label_coord, label_heatmap):
         loss, pred_heatmap = self.get_heatmap_loss(pred_heatmap=pred_heatmap, label_heatmap=label_heatmap)
@@ -27,20 +34,12 @@ class CustomLoss(nn.Module):
 
     def get_morph_loss(self, pred_coords:torch.Tensor, label_coords:torch.Tensor, alpha:float):
         # Dim of inputs = (batch, 68, 2)
-        # Random indexes
-        rand_index = np.random.choice(4, size=pred_coords.shape[1]//4).tolist()
-        for i in range(pred_coords.shape[1]//4):
-            rand_index[i] += i*4
 
         # Vectors
-        pred_vecA = pred_coords[:, rand_index[2:], :] - pred_coords[:, rand_index[1:-1], :]
-        pred_vecB = pred_coords[:, rand_index[:-2], :] - pred_coords[:, rand_index[1:-1], :]
-        label_vecA = label_coords[:, rand_index[2:], :] - label_coords[:, rand_index[1:-1], :]
-        label_vecB = label_coords[:, rand_index[:-2], :] - label_coords[:, rand_index[1:-1], :]
-
-        # Distance
-        pred_vecA_dis = torch.norm(pred_vecA, dim=-1)
-        label_vecA_dis = torch.norm(label_vecA, dim=-1)
+        pred_vecA = pred_coords[:, self.angle_pairs[:, 1], :] - pred_coords[:, self.angle_pairs[:, 0], :]
+        pred_vecB = pred_coords[:, self.angle_pairs[:, 2], :] - pred_coords[:, self.angle_pairs[:, 0], :]
+        label_vecA = label_coords[:, self.angle_pairs[:, 1], :] - label_coords[:, self.angle_pairs[:, 0], :]
+        label_vecB = label_coords[:, self.angle_pairs[:, 2], :] - label_coords[:, self.angle_pairs[:, 0], :]
 
         # Angles between vecA & vecB
         pred_angle = torch.atan2(pred_vecA[:, :, 0], pred_vecA[:, :, 1]) - torch.atan2(pred_vecB[:, :, 0], pred_vecB[:, :, 1])
@@ -56,6 +55,11 @@ class CustomLoss(nn.Module):
         morph_loss = self.angle_criterion(pred_angle_vec.reshape(N, 2), label_angle_vec.reshape(N, 2), label_similarity)
 
         # Distance loss
+        pred_vecA = pred_coords[:, self.dist_pairs[:, 1], :] - pred_coords[:, self.dist_pairs[:, 0], :]
+        label_vecA = label_coords[:, self.dist_pairs[:, 1], :] - label_coords[:, self.dist_pairs[:, 0], :]
+
+        pred_vecA_dis = torch.norm(pred_vecA, dim=-1)
+        label_vecA_dis = torch.norm(label_vecA, dim=-1)
         morph_loss += self.mae_criterion(pred_vecA_dis, label_vecA_dis)
 
         return alpha * morph_loss
