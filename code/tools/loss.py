@@ -13,7 +13,7 @@ class CustomLoss(nn.Module):
         self.angle_criterion = nn.CosineEmbeddingLoss()
 
         if use_morph_loss:
-            with open("code\morph_pairs.json") as f:
+            with open("tools\morph_pairs.json") as f:
                 morph_pairs = json.load(f)
             self.dist_pairs = np.array(morph_pairs[0])
             self.angle_pairs = np.array(morph_pairs[1])
