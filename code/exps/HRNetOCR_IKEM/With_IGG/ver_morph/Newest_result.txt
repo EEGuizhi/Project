@@ -1,0 +1,51 @@
+>> Start Program --- 2023-09-25 17:49:25.878668 
+
+Using device: cuda
+
+Using Model: HRNetOCR_IKEM
+Initialize model...
+Loading model parameters...
+Number of model parameters: 32942889
+
+Checkpoint Model is trained after 55 epoch
+
+[Model Revision]
+Mean Radial Error (click 0): 551.5745890140533
+Mean Radial Error (click 1): 536.6159107685089
+Mean Radial Error (click 2): 536.3817610740662
+Mean Radial Error (click 3): 536.3182802200317
+Mean Radial Error (click 4): 536.381754398346
+Mean Radial Error (click 5): 536.3182623386383
+Mean Radial Error (click 6): 536.3817567825317
+Mean Radial Error (click 7): 536.3182637691498
+Mean Radial Error (click 8): 536.3817558288574
+Mean Radial Error (click 9): 536.3182590007782
+Mean Radial Error (click 10): 536.3817534446716
+
+[Fully Manual Revision]
+Mean Radial Error (click 0): 551.5745890140533
+Mean Radial Error (click 1): 536.602771282196
+Mean Radial Error (click 2): 521.9230409860611
+Mean Radial Error (click 3): 507.44030117988586
+Mean Radial Error (click 4): 493.06732845306396
+Mean Radial Error (click 5): 478.8461699485779
+Mean Radial Error (click 6): 464.71157479286194
+Mean Radial Error (click 7): 450.6363317966461
+Mean Radial Error (click 8): 436.6367701292038
+Mean Radial Error (click 9): 422.7023329734802
+Mean Radial Error (click 10): 408.86183774471283
+
+[Reach Target MRE 20]
+Samples Count (click 0): 0 / 128
+Samples Count (click 1): 0 / 128
+Samples Count (click 2): 0 / 128
+Samples Count (click 3): 0 / 128
+Samples Count (click 4): 0 / 128
+Samples Count (click 5): 0 / 128
+Samples Count (click 6): 0 / 128
+Samples Count (click 7): 0 / 128
+Samples Count (click 8): 0 / 128
+Samples Count (click 9): 0 / 128
+Samples Count (click 10): 0 / 128
+
+>> End Program --- 2023-09-25 17:50:09.206854

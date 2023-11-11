@@ -1,0 +1,51 @@
+>> Start Program --- 2023-09-25 23:05:31.207943 
+
+Using device: cuda
+
+Using Model: UNet_IKEM
+Initialize model...
+Loading model parameters...
+Number of model parameters: 32543973
+
+Checkpoint Model is trained after 103 epoch
+
+[Model Revision]
+Mean Radial Error (click 0): 59.21543946862221
+Mean Radial Error (click 1): 45.36598752439022
+Mean Radial Error (click 2): 39.08592480421066
+Mean Radial Error (click 3): 36.34741730988026
+Mean Radial Error (click 4): 34.83552013337612
+Mean Radial Error (click 5): 34.05496072024107
+Mean Radial Error (click 6): 33.75133576244116
+Mean Radial Error (click 7): 33.613102559000254
+Mean Radial Error (click 8): 33.45220308378339
+Mean Radial Error (click 9): 33.39577382057905
+Mean Radial Error (click 10): 33.38306100666523
+
+[Fully Manual Revision]
+Mean Radial Error (click 0): 59.21543946862221
+Mean Radial Error (click 1): 56.02975918352604
+Mean Radial Error (click 2): 53.240698873996735
+Mean Radial Error (click 3): 50.64577153325081
+Mean Radial Error (click 4): 48.27414067089558
+Mean Radial Error (click 5): 46.702880062162876
+Mean Radial Error (click 6): 45.20862998813391
+Mean Radial Error (click 7): 43.7669837102294
+Mean Radial Error (click 8): 42.37910032644868
+Mean Radial Error (click 9): 41.04005964100361
+Mean Radial Error (click 10): 39.75381001830101
+
+[Reach Target MRE 20]
+Samples Count (click 0): 12 / 128
+Samples Count (click 1): 33 / 128
+Samples Count (click 2): 42 / 128
+Samples Count (click 3): 46 / 128
+Samples Count (click 4): 49 / 128
+Samples Count (click 5): 55 / 128
+Samples Count (click 6): 55 / 128
+Samples Count (click 7): 56 / 128
+Samples Count (click 8): 57 / 128
+Samples Count (click 9): 57 / 128
+Samples Count (click 10): 57 / 128
+
+>> End Program --- 2023-09-25 23:05:57.209736

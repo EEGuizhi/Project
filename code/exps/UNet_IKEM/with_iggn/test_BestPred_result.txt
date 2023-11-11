@@ -1,0 +1,28 @@
+>> Start Program --- 2023-08-18 23:42:33.932925 
+
+Using device: cuda
+
+Using Model: UNet_IKEM
+Initialize model...
+Loading model parameters...
+Number of model parameters: 32543973
+
+Checkpoint Model is trained after 52 epoch
+
+[Model Revision]
+Mean Radial Error (click 0): 69.53978906571865
+Mean Radial Error (click 1): 58.516682624816895
+Mean Radial Error (click 2): 53.65653719753027
+Mean Radial Error (click 3): 52.15828471630812
+Mean Radial Error (click 4): 51.76978848874569
+Mean Radial Error (click 5): 51.620231196284294
+
+[Fully Manual Revision]
+Mean Radial Error (click 0): 69.53978906571865
+Mean Radial Error (click 1): 65.02316999435425
+Mean Radial Error (click 2): 61.35363848507404
+Mean Radial Error (click 3): 58.1550165861845
+Mean Radial Error (click 4): 55.479421094059944
+Mean Radial Error (click 5): 53.706164211034775
+
+>> End Program --- 2023-08-18 23:42:51.421581

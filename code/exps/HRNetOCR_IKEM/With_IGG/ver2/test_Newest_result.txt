@@ -1,0 +1,28 @@
+>> Start Program --- 2023-08-21 18:39:48.368558 
+
+Using device: cuda
+
+Using Model: HRNetOCR_IKEM
+Initialize model...
+Loading model parameters...
+Number of model parameters: 32942889
+
+Checkpoint Model is trained after 112 epoch
+
+[Model Revision]
+Mean Radial Error (click 0): 65.17895253747702
+Mean Radial Error (click 1): 50.4217539653182
+Mean Radial Error (click 2): 41.26375392079353
+Mean Radial Error (click 3): 35.873692352324724
+Mean Radial Error (click 4): 33.13781479001045
+Mean Radial Error (click 5): 31.452123899012804
+
+[Fully Manual Revision]
+Mean Radial Error (click 0): 65.17895253747702
+Mean Radial Error (click 1): 62.3293486982584
+Mean Radial Error (click 2): 59.67952837049961
+Mean Radial Error (click 3): 57.18820046633482
+Mean Radial Error (click 4): 54.81370164453983
+Mean Radial Error (click 5): 53.24264910817146
+
+>> End Program --- 2023-08-21 18:40:17.473954
