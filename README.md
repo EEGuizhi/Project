@@ -25,7 +25,7 @@
 
 
 ### **改動：**
-- 在計算 Loss 時，由於訓練成效較差(可能有哪邊出錯)，移除了使用 **"Morphology-Aware"** 的部分。
+- 在計算 Loss 時，由於訓練成效較差，移除使用 **"Morphology-Aware"** 的部分。
 - 在訓練模型時，分為 **train_ver1.py** 以及 **train_ver2.py**：<br>
     - **train_ver1.py**：<br>
     基本上以 "模擬使用者互動行為" 的方式進行訓練，<br>
