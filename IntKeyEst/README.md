@@ -1,9 +1,15 @@
 # Morphology-Aware Interactive Keypoint Estimation
 
-### **參考連結：**
-https://github.com/seharanul17/interactive_keypoint_estimation
-
 ### **說明：**
-為了使用該論文提供的程式碼進行脊椎關鍵點偵測，<br>
-我們整理出了detect.py以及調整RITM_SE_HRNet32.py的程式碼來單一圖片的偵測，<br>
+為便於理解及比較關鍵點的偵測結果，<br>
+我們透過整理 [1] 的程式碼並自行寫出detect.py，及調整RITM_SE_HRNet32.py的程式碼來實現單一圖片的偵測，<br>
 並暫時以print的方式進行輸出。<br>
+<br>
+
+### **補充：**
+除模型架構上有重疊的地方以外，<br>
+我們都沒有使用該論文之程式碼於我們的專題中，<br>
+而是完全重新實作程式碼。<br>
+
+然而有部分的實驗方法參考自該論文，<br>
+因此程式碼中勢必會有雷同之處。
