@@ -6,11 +6,12 @@ import numpy as np
 
 SHOW_INTERVAL = 0  # (ms) (= 0 會等到按鍵按下)
 DATASET_ROOT = "D:/python/interactive_keypoint_estimation/code/data/dataset16/boostnet_labeldata"
-LABEL_FILE_PATH = "code/dataset/test_data.json"
+LABEL_FILE_PATH = "D:/GitHub/EEGuizhi/Project/code/dataset/all_data.json"
 KEYPOINTS_PERC2COORD = True
 
 SHOW_FIRST_LIST = [
-    "sunhl-1th-01-Mar-2017-311 K AP.jpg"
+    "sunhl-1th-01-Mar-2017-311 M AP.jpg",
+    "sunhl-1th-01-Mar-2017-311 K AP.jpg",
     "sunhl-1th-25-Jul-2016-49 A AP.jpg",
     "sunhl-1th-09-Jan-2017-212 A AP.jpg",
     "sunhl-1th-21-Jul-2016-15 E AP.jpg",

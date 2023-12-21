@@ -23,7 +23,8 @@ CHECKPOINT_PATH = ""
 FILE_PATH = "./dataset/all_data.json"
 
 # Basic settings
-HINT_TIMES = 5
+TARGET_MRE = 40  # beta value
+HINT_TIMES = 5  # alpha value
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
 NUM_OF_KEYPOINTS = 68
@@ -76,6 +77,7 @@ if __name__ == '__main__':
 
     # Testing
     sample_count = 0
+    Reach_tarMRE_count = [0 for i in range(HINT_TIMES+1)]
     Model_MRE = [0 for i in range(HINT_TIMES+1)]
     Manual_MRE = [0 for i in range(HINT_TIMES+1)]
     with torch.no_grad():
@@ -123,6 +125,7 @@ if __name__ == '__main__':
                     # Calc MRE
                     for item in manual_revision[s]:
                         keypoints[s, item["index"]] = item["coord"]
+                    if get_MRE(keypoints[s], origSize_labels[s]) < TARGET_MRE: Reach_tarMRE_count[click] += 1
                     Model_MRE[click] += get_MRE(keypoints[s], origSize_labels[s])
                     Manual_MRE[click] += get_MRE(scale_manual_keypoints[s], origSize_labels[s])
 
@@ -146,6 +149,10 @@ if __name__ == '__main__':
     print("\n[Fully Manual Revision]")
     for i in range(HINT_TIMES+1):
         print(f"Mean Radial Error (click {i}): {Manual_MRE[i] / sample_count}")
+
+    print("\n[Reach Target MRE]")
+    for i in range(HINT_TIMES+1):
+        print(f"Samples Count (click {i}): {Reach_tarMRE_count[i]} / {sample_count}")
 
 
     # Program Ended
