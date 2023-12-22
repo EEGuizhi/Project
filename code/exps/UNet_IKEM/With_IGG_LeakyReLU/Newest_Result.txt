@@ -1,0 +1,90 @@
+>> Start Program --- 2023-12-21 09:47:51.230380 
+
+Using device: cuda
+
+Using Model: UNet_IKEM
+Initialize model...
+Loading model parameters...
+Number of model parameters: 32548261
+
+Checkpoint Model is trained after 198 epoch
+
+[Model Revision]
+Mean Radial Error (click 0): 51.93331155180931
+Mean Radial Error (click 1): 37.0167950540781
+Mean Radial Error (click 2): 29.829572796821594
+Mean Radial Error (click 3): 25.39374042674899
+Mean Radial Error (click 4): 23.159118454903364
+Mean Radial Error (click 5): 21.692392863333225
+Mean Radial Error (click 6): 20.86441031843424
+Mean Radial Error (click 7): 20.06723926961422
+Mean Radial Error (click 8): 19.565752804279327
+Mean Radial Error (click 9): 19.2674148529768
+Mean Radial Error (click 10): 19.066860646009445
+
+[Fully Manual Revision]
+Mean Radial Error (click 0): 51.93331155180931
+Mean Radial Error (click 1): 49.43168218061328
+Mean Radial Error (click 2): 47.06339678913355
+Mean Radial Error (click 3): 44.79585526138544
+Mean Radial Error (click 4): 42.60966508463025
+Mean Radial Error (click 5): 41.17991942167282
+Mean Radial Error (click 6): 39.81424830108881
+Mean Radial Error (click 7): 38.49454486370087
+Mean Radial Error (click 8): 37.222383700311184
+Mean Radial Error (click 9): 35.99414683505893
+Mean Radial Error (click 10): 34.803076561540365
+
+[Reach Target MRE 20]
+Samples Count (click 0): 40 / 128
+Samples Count (click 1): 67 / 128
+Samples Count (click 2): 79 / 128
+Samples Count (click 3): 87 / 128
+Samples Count (click 4): 96 / 128
+Samples Count (click 5): 98 / 128
+Samples Count (click 6): 101 / 128
+Samples Count (click 7): 102 / 128
+Samples Count (click 8): 104 / 128
+Samples Count (click 9): 106 / 128
+Samples Count (click 10): 108 / 128
+
+[Reach Target MRE 30]
+Samples Count (click 0): 63 / 128
+Samples Count (click 1): 83 / 128
+Samples Count (click 2): 95 / 128
+Samples Count (click 3): 105 / 128
+Samples Count (click 4): 110 / 128
+Samples Count (click 5): 111 / 128
+Samples Count (click 6): 114 / 128
+Samples Count (click 7): 115 / 128
+Samples Count (click 8): 117 / 128
+Samples Count (click 9): 117 / 128
+Samples Count (click 10): 117 / 128
+
+[Reach Target MRE 40]
+Samples Count (click 0): 69 / 128
+Samples Count (click 1): 90 / 128
+Samples Count (click 2): 103 / 128
+Samples Count (click 3): 108 / 128
+Samples Count (click 4): 111 / 128
+Samples Count (click 5): 114 / 128
+Samples Count (click 6): 115 / 128
+Samples Count (click 7): 117 / 128
+Samples Count (click 8): 117 / 128
+Samples Count (click 9): 117 / 128
+Samples Count (click 10): 117 / 128
+
+[Reach Target MRE 50]
+Samples Count (click 0): 79 / 128
+Samples Count (click 1): 102 / 128
+Samples Count (click 2): 107 / 128
+Samples Count (click 3): 110 / 128
+Samples Count (click 4): 115 / 128
+Samples Count (click 5): 116 / 128
+Samples Count (click 6): 116 / 128
+Samples Count (click 7): 118 / 128
+Samples Count (click 8): 118 / 128
+Samples Count (click 9): 118 / 128
+Samples Count (click 10): 118 / 128
+
+>> End Program --- 2023-12-21 09:48:13.244278

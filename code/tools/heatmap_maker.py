@@ -5,7 +5,7 @@ class HeatmapMaker():
         self.image_size = image_size
         self.heatmap_std = heatmap_std
 
-    def make_gaussian_heatmap(self, mean:torch.Tensor, size:tuple):
+    def make_gaussian_heatmap(self, mean:torch.Tensor, size:tuple) -> torch.Tensor:
         # mean = coord: (68, 2)
         mean = mean.unsqueeze(1).unsqueeze(1)
         grid = torch.stack(torch.meshgrid(torch.arange(size[0]), torch.arange(size[1])), dim=-1).unsqueeze(0).to(mean.device)
@@ -15,7 +15,7 @@ class HeatmapMaker():
         gaus = (-0.5 * (x_minus_mean.pow(2) / var)).sum(-1).exp()
         return gaus
 
-    def coord2heatmap(self, coord:torch.Tensor):
+    def coord2heatmap(self, coord:torch.Tensor) -> torch.Tensor:
         # coord : (batch, 68, 2)
         with torch.no_grad():
             heatmap = torch.stack([
@@ -23,7 +23,7 @@ class HeatmapMaker():
             ])
         return heatmap
 
-    def heatmap2sargmax_coord(self, heatmap:torch.Tensor):
+    def heatmap2sargmax_coord(self, heatmap:torch.Tensor) -> torch.Tensor:
         # heatmap: (batch, 68, 512, 256) = (batch, ch, row, col)
         heatmap_col = torch.sum(heatmap, dim=-2)  # (batch, ch, col)
         heatmap_row = torch.sum(heatmap, dim=-1)  # (batch, ch, row)
