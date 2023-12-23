@@ -199,7 +199,7 @@ if __name__ == '__main__':
         pred2_MRE = []
         model.eval()
         with torch.no_grad():
-            for i, (inputs, labels, hint_indexes, y_x_size) in enumerate(val_loader):
+            for i, (images, labels, hint_indexes, y_x_size) in enumerate(val_loader):
                 images = images.to(device)
                 labels = labels.to(device)
                 labels_heatmap = heatmapMaker.coord2heatmap(labels)

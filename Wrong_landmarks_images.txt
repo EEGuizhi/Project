@@ -1,0 +1,14 @@
+>> Start logging wrong landmarks images name --- 2023-12-23 20:47:29.950062
+data/training/sunhl-1th-02-Jan-2017-162 B AP.jpg
+data/training/sunhl-1th-03-Jan-2017-163 A AP.jpg
+data/training/sunhl-1th-03-Jan-2017-163 B AP.jpg
+data/training/sunhl-1th-05-Jan-2017-172 B AP.jpg
+data/training/sunhl-1th-06-Jan-2017-182 A AP.jpg  (center wrong)
+data/training/sunhl-1th-06-Jan-2017-184 A AP.jpg
+data/training/sunhl-1th-06-Jan-2017-187 A AP.jpg
+data/training/sunhl-1th-09-Jan-2017-215 D AP.jpg
+data/training/sunhl-1th-10-Jan-2017-221 A AP.jpg
+data/training/sunhl-1th-30-Dec-2016-158 A AP.jpg
+data/training/sunhl-1th-30-Dec-2016-159 A AP2.jpg
+data/training/sunhl-1th-06-Jan-2017-188 B AP.jpg
+data/test/sunhl-1th-28-Feb-2017-294 A AP.jpg
