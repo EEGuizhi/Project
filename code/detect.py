@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from skimage.exposure import match_histograms
 
 import cv2
+import json
 import torch
 import numpy as np
 
@@ -13,18 +14,20 @@ from model.unet_IKEM import UNet_IKEM
 from tools.heatmap_maker import HeatmapMaker
 
 
-USE_GUI = True
+USE_GUI = False
+INPUT_IMAGE = "sunhl-1th-01-Mar-2017-311 M AP.jpg"  # an image in the test folder
+AUTO_REVISE_LABEL_ROOT = "D:/GitHub/EEGuizhi/Project/code/dataset/all_data.json"  # 限有標籤的資料
 
 
 # Model
 MODELS = ["HRNetOCR_IKEM", "UNet_IKEM"]
-USE_MODEL = 0
-WITH_IGGN = True
+USE_MODEL = 1
 
-INPUT_IMAGE_PATH = ""
+
+INPUT_IMAGE_PATH = "D:/python/interactive_keypoint_estimation/code/data/dataset16/boostnet_labeldata/data/test/"+INPUT_IMAGE
 HIST_MATCH_IMAGE = ""
-CHECKPOINT_PATH = ""
-HINT_TIMES = 15
+CHECKPOINT_PATH = "models_saved/UNet_IKEM_12_21.pth"
+HINT_TIMES = 10
 
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
@@ -54,7 +57,7 @@ def set_seed(seed):
 def show_pred_image(gray_image:np.ndarray, coords:torch.Tensor, click:int, save_folder:str=''):
     image = np.stack([gray_image, gray_image, gray_image], axis=-1)
     coords = coords.tolist()
-    radius = 6
+    radius = 10
     i = 0
     for coord in coords:
         if i%4 == 0:
@@ -82,9 +85,31 @@ def onclick(event):
     plt.draw()
 
 
+def keypoints_perc2coord(coords:np.ndarray, img_size:tuple):
+    real_coords = np.empty_like(coords)
+    real_coords[:, 0] = coords[:, 0] * img_size[0]
+    real_coords[:, 1] = coords[:, 1] * img_size[1]
+    return real_coords.astype(int).tolist()
+
+
 if __name__ == '__main__':
     # Program Start
     print(f"\n>> Start Program --- {datetime.datetime.now()} \n")
+
+    # Auto revise
+    corner_coords = None
+    center_coords = None
+    if AUTO_REVISE_LABEL_ROOT != "" and AUTO_REVISE_LABEL_ROOT != None:
+        with open(AUTO_REVISE_LABEL_ROOT, 'r') as f:
+            label_data = json.loads(f.read())
+
+        spec_data = INPUT_IMAGE_PATH.split("/")[-1]
+
+        # Show specific images first
+        for data in label_data:
+            if spec_data in data["image_path"]:
+                corner_coords = torch.tensor(keypoints_perc2coord(np.array(data["corners"]), data["y_x_size"]))
+                center_coords = torch.tensor(keypoints_perc2coord(np.array(data["centers"]), data["y_x_size"]))
 
     # Basic settings
     set_seed(42)
@@ -94,9 +119,9 @@ if __name__ == '__main__':
     # Initialize
     print("Initialize model...")
     if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
-        model = IKEM(use_iggnet=WITH_IGGN, pretrained_model_path=None).to(device)
+        model = IKEM(pretrained_model_path=None).to(device)
     elif MODELS[USE_MODEL] == "UNet_IKEM":
-        model = UNet_IKEM(use_iggnet=WITH_IGGN).to(device)
+        model = UNet_IKEM().to(device)
     heatmapMaker = HeatmapMaker(IMAGE_SIZE, HEATMAP_STD)
 
     if os.path.exists(CHECKPOINT_PATH):
@@ -146,13 +171,20 @@ if __name__ == '__main__':
         manual_revision = []
         model.eval()
         for click in range(HINT_TIMES+1):
+            print(f">> Detection start time: {datetime.datetime.now()}")
             # Model forward
             if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
                 outputs, aux_out = model(hint_heatmap, prev_pred, image)
             elif MODELS[USE_MODEL] == "UNet_IKEM":
                 outputs = model(hint_heatmap, prev_pred, image)
+            print(f">> Detection finish time: {datetime.datetime.now()}")
 
             # Plot keypoints
+            plot_heatmap = outputs.cpu().detach().sigmoid()[0][10]
+            plot_heatmap = plot_heatmap.numpy()
+            plot_heatmap = plot_heatmap * 255
+            print(f"plot_heatmap.max() = {plot_heatmap.max()}")
+            cv2.imwrite("heatmap_of_keypoint_10th.jpg", plot_heatmap)
             keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
             keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
             keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
@@ -179,10 +211,15 @@ if __name__ == '__main__':
 
                     fix_coord = None
                 else:
-                    # User interaction
-                    index = int(input("\nPlease input the index of keypoints you want to fix："))
-                    nums = input("Please input the new coord y, x：").split(',')[0:2]
-                    coord = [int(num) for num in nums]
+                    if AUTO_REVISE_LABEL_ROOT:
+                        keypoints = keypoints.cpu() - corner_coords
+                        index = torch.argmax(torch.sum(torch.pow(keypoints, 2), dim=-1)).item()
+                        coord = corner_coords[index]
+                    else:
+                        # User interaction
+                        index = int(input("\nPlease input the index of keypoints you want to fix："))
+                        nums = input("Please input the new coord y, x：").split(',')[0:2]
+                        coord = [int(num) for num in nums]
 
                 manual_revision.append({
                     "index": index,
