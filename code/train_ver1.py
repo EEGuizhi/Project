@@ -134,7 +134,7 @@ if __name__ == '__main__':
                     prev_pred = outputs.detach().sigmoid()
 
                     # Inputs update
-                    pred_coord = heatmapMaker.heatmap2sargmax_coord(prev_pred)
+                    pred_coord = heatmapMaker.heatmap2expected_coord(prev_pred)
                     for s in range(hint_heatmap.shape[0]):  # s = idx of samples
                         index = choose_hint_index(pred_coord[s], labels[s])
                         hint_heatmap[s, index] = labels_heatmap[s, index]
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
             # Update Model
             pred_heatmap = outputs.sigmoid()
-            pred_coord = heatmapMaker.heatmap2sargmax_coord(pred_heatmap)
+            pred_coord = heatmapMaker.heatmap2expected_coord(pred_heatmap)
             loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
             loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
@@ -185,7 +185,7 @@ if __name__ == '__main__':
                     prev_pred = outputs.detach().sigmoid()
 
                     pred_heatmap = outputs.sigmoid()
-                    pred_coord = heatmapMaker.heatmap2sargmax_coord(prev_pred)
+                    pred_coord = heatmapMaker.heatmap2expected_coord(prev_pred)
                     loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
                     loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 

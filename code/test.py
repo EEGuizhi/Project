@@ -110,7 +110,7 @@ if __name__ == '__main__':
                     outputs = model(hint_heatmap, prev_pred, images)
                 prev_pred = outputs.sigmoid()
 
-                pred_coords = heatmapMaker.heatmap2sargmax_coord(prev_pred)
+                pred_coords = heatmapMaker.heatmap2expected_coord(prev_pred)
                 if click == 0: manual_keypoints = pred_coords.clone()
 
                 # Get MRE

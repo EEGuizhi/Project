@@ -185,7 +185,7 @@ if __name__ == '__main__':
             plot_heatmap = plot_heatmap * 255
             print(f"plot_heatmap.max() = {plot_heatmap.max()}")
             cv2.imwrite("heatmap_of_keypoint_10th.jpg", plot_heatmap)
-            keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
+            keypoints = heatmapMaker.heatmap2expected_coord(outputs.detach().sigmoid())[0]
             keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
             keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
             for item in manual_revision:

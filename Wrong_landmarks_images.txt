@@ -11,4 +11,9 @@ data/training/sunhl-1th-10-Jan-2017-221 A AP.jpg
 data/training/sunhl-1th-30-Dec-2016-158 A AP.jpg
 data/training/sunhl-1th-30-Dec-2016-159 A AP2.jpg
 data/training/sunhl-1th-06-Jan-2017-188 B AP.jpg
+
+>> Start logging wrong landmarks images name --- 2023-12-24 13:18:32.053040
+data/test/sunhl-1th-01-Mar-2017-312 C AP.jpg
+data/test/sunhl-1th-28-Feb-2017-243 C AP.jpg
+data/test/sunhl-1th-28-Feb-2017-292 A AP.jpg
 data/test/sunhl-1th-28-Feb-2017-294 A AP.jpg

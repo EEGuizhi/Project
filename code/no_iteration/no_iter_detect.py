@@ -83,7 +83,7 @@ if __name__ == '__main__':
         outputs, aux_out = model(image)
 
         # Plot keypoints
-        keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.detach().sigmoid())[0]
+        keypoints = heatmapMaker.heatmap2expected_coord(outputs.detach().sigmoid())[0]
         keypoints[:, 0] = keypoints[:, 0] * image_shape[0] / IMAGE_SIZE[0]
         keypoints[:, 1] = keypoints[:, 1] * image_shape[1] / IMAGE_SIZE[1]
         show_pred_image(orig_image, keypoints)

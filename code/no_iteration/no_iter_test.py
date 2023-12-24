@@ -79,7 +79,7 @@ if __name__ == '__main__':
                 origSize_labels[s] = labels[s] * y_x_size[s] / image_size
 
             outputs, aux_out = model(images)
-            keypoints = heatmapMaker.heatmap2sargmax_coord(outputs.sigmoid())
+            keypoints = heatmapMaker.heatmap2expected_coord(outputs.sigmoid())
 
             # Get MRE
             for s in range(images.shape[0]):

@@ -23,7 +23,7 @@ class HeatmapMaker():
             ])
         return heatmap
 
-    def heatmap2sargmax_coord(self, heatmap:torch.Tensor) -> torch.Tensor:
+    def heatmap2expected_coord(self, heatmap:torch.Tensor) -> torch.Tensor:
         # heatmap: (batch, 68, 512, 256) = (batch, ch, row, col)
         heatmap_col = torch.sum(heatmap, dim=-2)  # (batch, ch, col)
         heatmap_row = torch.sum(heatmap, dim=-1)  # (batch, ch, row)

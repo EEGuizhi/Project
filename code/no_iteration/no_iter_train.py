@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
             # Update Model
             pred_heatmap = outputs.sigmoid()
-            pred_coord = heatmapMaker.heatmap2sargmax_coord(pred_heatmap)
+            pred_coord = heatmapMaker.heatmap2expected_coord(pred_heatmap)
             loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
             loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
                 outputs, aux_out = model(images)
                 pred_heatmap = outputs.sigmoid()
-                pred_coord = heatmapMaker.heatmap2sargmax_coord(pred_heatmap)
+                pred_coord = heatmapMaker.heatmap2expected_coord(pred_heatmap)
                 loss = loss_func(pred_coord, pred_heatmap, labels, labels_heatmap) if USE_CUSTOM_LOSS else loss_func(pred_heatmap, labels_heatmap)
                 loss += nn.BCELoss()(aux_out.sigmoid(), labels_heatmap)
 
