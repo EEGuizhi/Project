@@ -1,4 +1,4 @@
-Epoch,Train 1stPred. Loss,Train 2ndPred. Loss,Val 1stPred. Loss,Val 2ndPred. Loss,Val 1stPred. MRE,Val 2ndPred. MRE,,,Compare,Train 1stPred. Loss,Train 2ndPred. Loss,Val 1stPred. Loss,Val 2ndPred. Loss,Method1 ValMRE,Val 2ndPred. MRE,,,,Method 1 Gap,Accu. 1,Method 2 Gap,Accu. 2
+Epoch,Train 1stPred. Loss,Train 2ndPred. Loss,Val 1stPred. Loss,Val 2ndPred. Loss,Val 1stPred. MRE,Val 2ndPred. MRE,,,Compare,Train 1stPred. Loss,Train 2ndPred. Loss,Val 1stPred. Loss,Val 2ndPred. Loss,Method1 ValMRE,Val 2ndPred. MRE,,,,Method 1 diff.,Accu. 1,Method 2 diff.,Accu. 2
 1,0.27561863,,0.049418451,0.04942127,128.210083,128.2138367,,,,0.27453217,none,0.059153811,0.059166991,125.0775651,125.0673158,,,,-0.003753662,-0.003753662,0.010249257,0.010249257
 2,0.039746591,,0.036597788,0.036597845,121.1855545,121.1846161,,,,0.039829638,none,0.036425843,0.036426424,121.2100617,121.2093658,,,,0.000938416,-0.002815247,0.000695825,0.010945082
 3,0.033638367,,0.03556778,0.035568229,113.0652695,113.0665894,,,,0.033700743,none,0.034759846,0.034762368,108.0359355,108.0355927,,,,-0.001319885,-0.004135132,0.000342846,0.011287928
