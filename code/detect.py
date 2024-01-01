@@ -171,7 +171,7 @@ if __name__ == '__main__':
         manual_revision = []
         model.eval()
         for click in range(HINT_TIMES+1):
-            print(f">> Detection start time: {datetime.datetime.now()}")
+            print(f"\n>> Detection start time: {datetime.datetime.now()}")
             # Model forward
             if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
                 outputs, aux_out = model(hint_heatmap, prev_pred, image)

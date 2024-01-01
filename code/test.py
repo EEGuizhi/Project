@@ -23,7 +23,7 @@ CHECKPOINT_PATH = ""
 FILE_PATH = "./dataset/all_data.json"
 
 # Basic settings
-TARGET_MRE = 40  # beta value
+TARGET_MRE = 20  # beta value
 HINT_TIMES = 5  # alpha value
 IMAGE_SIZE = (512, 256)
 HEATMAP_STD = 7.5
@@ -102,6 +102,7 @@ if __name__ == '__main__':
 
             # Simulate user interaction
             manual_revision = [[] for s in range(labels.shape[0])]
+            pass_mark = [0 for i in range(labels.shape[0])]
             for click in range(HINT_TIMES+1):
                 # Model forward
                 if MODELS[USE_MODEL] == "HRNetOCR_IKEM":
@@ -125,7 +126,8 @@ if __name__ == '__main__':
                     # Calc MRE
                     for item in manual_revision[s]:
                         keypoints[s, item["index"]] = item["coord"]
-                    if get_MRE(keypoints[s], origSize_labels[s]) < TARGET_MRE: Reach_tarMRE_count[click] += 1
+                    if get_MRE(keypoints[s], origSize_labels[s]) <= TARGET_MRE:
+                        pass_mark[s] = 1
                     Model_MRE[click] += get_MRE(keypoints[s], origSize_labels[s])
                     Manual_MRE[click] += get_MRE(scale_manual_keypoints[s], origSize_labels[s])
 
@@ -140,6 +142,7 @@ if __name__ == '__main__':
                     # Manual revision
                     index = find_worst_index(manual_keypoints[s], labels[s])
                     manual_keypoints[s, index] = labels[s, index]
+                Reach_tarMRE_count[click] += sum(pass_mark)
 
     # Outputs
     print("[Model Revision]")

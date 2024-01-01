@@ -4,7 +4,7 @@ import random
 import numpy as np
 import pandas as pd
 
-EARLY_STOP_EPOCH = 50
+EARLY_STOP_EPOCH = 36
 
 
 def set_seed(seed):
@@ -61,11 +61,10 @@ def get_batch_MRE(pred_coords:torch.Tensor, label_coords:torch.Tensor):
 
 def get_MRE(pred_coords:torch.Tensor, label_coords:torch.Tensor):
     # Dim of inputs = (68, 2)
-    num_of_keypoints = pred_coords.shape[0]
     diff_coords = torch.pow(pred_coords - label_coords, 2)
     diff_coords = torch.sum(diff_coords, dim=-1)
-    diff_coords = torch.pow(diff_coords, 0.5)
-    mre = torch.sum(diff_coords).cpu() / num_of_keypoints
+    diff_coords = torch.sqrt(diff_coords)
+    mre = torch.mean(diff_coords).cpu()
     return mre.item()
 
 

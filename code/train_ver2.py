@@ -63,9 +63,9 @@ if __name__ == '__main__':
 
     # Dataset
     train_transform = A.Compose([
-        A.augmentations.geometric.rotate.SafeRotate((-10, 10), p=0.5, border_mode=cv2.BORDER_CONSTANT),
+        A.augmentations.geometric.rotate.SafeRotate((-15, 15), p=0.5, border_mode=cv2.BORDER_CONSTANT),
         A.HorizontalFlip(p=0.5),
-        A.augmentations.geometric.resize.RandomScale((-0.1, 0.0), p=0.5),
+        A.augmentations.geometric.resize.RandomScale((-0.1, 0.2), p=0.5),
         A.RandomBrightnessContrast(p=0.5),
         A.augmentations.geometric.resize.Resize(IMAGE_SIZE[0], IMAGE_SIZE[1], p=1)
     ], keypoint_params=A.KeypointParams(format='yx', remove_invisible=False))

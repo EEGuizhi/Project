@@ -1,0 +1,4 @@
+- this is the best result
+- using all_data (didn;t delete wrong keypoints data)
+- transfrom using rotation=(-15, 15), resize=(-0.1, 0.2)
+- early stop epoch = 36
