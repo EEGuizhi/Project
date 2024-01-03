@@ -1,6 +1,6 @@
 # **Senior Project** - Interactive Vertebrae Keypoint Estimation
 
-<img src="pics\intro.png" width=500><br>
+<img src="pics\intro.png" width=80%><br>
 
 ### **參與人員**
 - **指導教授**：張振豪教授
@@ -47,29 +47,29 @@
     (我們認為資料集中有部分之關鍵點標記有誤，但仍完整將其用於模型訓練與測試中)
 
 - **Networks Structure**：<br>
-    <img src="pics\HRNetOCR_IKEM.png" width=500><br>
-    <img src="pics\UNet_IKEM.png" width=500>
+    <img src="pics\HRNetOCR_IKEM.png" width=80%><br>
+    <img src="pics\UNet_IKEM.png" width=80%>
 
 - **Activation Functions**：<br>
-    <img src="pics\activation_functions.png" width=500><br>
+    <img src="pics\activation_functions.png" width=70%><br>
     我們將 UNet backbone 中的 ReLU 都換成了 Leaky ReLU (alpha = 0.01)。
 
 - **Training Method**：<br>
     Flow Chart：<br>
-    <img src="pics\training_flow_chart.png" width=500><br>
+    <img src="pics\training_flow_chart.png" width=70%><br>
     訓練時是否在第一次偵測以前就提供 Hint heat map 之比較圖：<br>
-    <img src="pics\training_method_comparing.png" width=500><br>
+    <img src="pics\training_method_comparing.png" width=70%><br>
     計算方式為：$(MRE_{pred1} - MRE_{pred2}) / MRE_{pred1} \times 100\%$ 
 
 - **Comparing Different Loss Calculating Method**：<br>
-    <img src="pics\loss_comparing.png" width=500><br>
+    <img src="pics\loss_comparing.png" width=70%><br>
     我們放棄了 Morph. Loss 的計算方法，單純對輸出 Heat maps 計算 Binary Cross Entropy Loss。
 
 - **Training Results Comparing**：<br>
-    <img src="pics\results_1.png" width=500>
+    <img src="pics\results_1.png" width=80%>
 
 - **Models Performance**：<br>
-    <img src="pics\results_2.png" width=500>
+    <img src="pics\results_2.png" width=80%>
 
 
 ### **參考資料**
