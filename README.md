@@ -59,7 +59,7 @@
     <img src="pics\training_flow_chart.png" width=70%><br>
     訓練時是否在第一次偵測以前就提供 Hint heat map 之比較圖：<br>
     <img src="pics\training_method_comparing.png" width=70%><br>
-    計算方式為： $(MRE_{pred1} - MRE_{pred2}) / MRE_{pred1} \times 100$%
+    計算方式為： (MRE_{pred1} - MRE_{pred2}) / MRE_{pred1}
 
 - **Comparing Different Loss Calculating Method**：<br>
     <img src="pics\loss_comparing.png" width=70%><br>
