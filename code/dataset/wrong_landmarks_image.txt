@@ -1,7 +1,0 @@
-FROM_CSVFILE = False:
-    sunhl-1th-02-Jan-2017-162 B AP.jpg
-    sunhl-1th-03-Jan-2017-163 B AP.jpg
-    sunhl-1th-05-Jan-2017-167 A AP.jpg
-    sunhl-1th-06-Jan-2017-184 A AP.jpg
-    sunhl-1th-06-Jan-2017-187 A AP.jpg
-    sunhl-1th-06-Jan-2017-188 B AP.jpg
