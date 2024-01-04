@@ -2,13 +2,13 @@
 
 <img src="pics\intro.png" width=95%><br>
 
-### **參與人員**
+## **參與人員**
 - **指導教授**：張振豪教授
 - **組員**：陳柏翔(60%)、陳沛昀(40%)
 - **感謝**：蕭淳元學長 (協助書面報告修正並給予建議)
 <br><br>
 
-### **摘要**
+## **摘要**
 本專題利用深度學習及卷積神經網路技術，<br>
 幫助醫療人員在脊椎醫學影像上進行每節椎體角落的偵測與標記，<br>
 並以神經網路和使用者互動的方式進行偵測。<br>
@@ -20,7 +20,7 @@
 <br><br>
 
 
-### **程式碼說明**
+## **程式碼說明**
 - **檔案說明**：
     - `Project/code` 存放我們所完成的、此專題所需之所有程式碼。
     - `Project/exps` 存放此專題的實驗數據(不含模型參數檔)。
@@ -41,38 +41,46 @@
 <br><br>
 
 
-### **重點節錄**
-- **Dataset**：<br>
-    AASCE Dataset (https://aasce19.github.io/) [2],<br>
-    (我們認為資料集中有部分之關鍵點標記有誤，但仍完整將其用於模型訓練與測試中)
+## **重點節錄**
 
-- **Networks Structure**：<br>
-    <img src="pics\HRNetOCR_IKEM.png" width=90%><br>
-    <img src="pics\UNet_IKEM.png" width=90%>
+### **Dataset**：
+AASCE [2] Dataset (https://aasce19.github.io/) <br>
+(我們認為資料集中有部分之關鍵點標記有誤，但仍完整將其用於模型訓練與測試中)
 
-- **Activation Functions**：<br>
-    <img src="pics\activation_functions.png" width=80%><br>
-    我們將 UNet backbone 中的 ReLU 都換成了 Leaky ReLU (alpha = 0.01)。
+### **Networks Structure**：
+<img src="pics\HRNetOCR_IKEM.png" width=90%><br>
+<img src="pics\UNet_IKEM.png" width=90%><br>
+<br>
 
-- **Training Method**：<br>
-    Flow Chart：<br>
-    <img src="pics\training_flow_chart.png" width=80%><br>
-    訓練時是否在第一次偵測以前就提供 Hint heat map 之比較圖：<br>
-    <img src="pics\training_method_comparing.png" width=80%><br>
-    計算方式為： (pred1_MRE - pred2_MRE) / pred1_MRE
+### **Activation Functions**：
+<img src="pics\activation_functions.png" width=80%><br>
+我們將 UNet backbone 中的 ReLU 都換成了 Leaky ReLU (alpha = 0.01)。<br>
+<br>
 
-- **Comparing Different Loss Functions**：<br>
-    <img src="pics\loss_comparing.png" width=80%><br>
-    我們放棄了 Morph. Loss 的計算方法，單純對輸出 Heat maps 計算 Binary Cross Entropy Loss。
+### **Training Method**：
+Flow Chart<br>
+<img src="pics\training_flow_chart.png" width=80%><br>
+訓練時是否在第一次偵測以前就提供 Hint heat map 之誤差修正量比較圖<br>
+<img src="pics\training_method_comparing.png" width=80%><br>
+<br>
 
-- **Training Results Comparing**：<br>
-    <img src="pics\results_1.png" width=90%>
+計算方式為： $(MRE_{pred1} - MRE_{pred2}) / MRE_{pred1} \times 100$% <br>
+<br>
 
-- **Models Performance**：<br>
-    <img src="pics\results_2.png" width=90%>
+### **Comparing Different Loss Functions**：
+<img src="pics\loss_comparing.png" width=80%><br>
+我們放棄了 Morph. Loss 的計算方法，單純對輸出 Heat maps 計算 Binary Cross Entropy Loss。<br>
+<br>
 
+### **Training Results Comparing**：
+<img src="pics\results_1.png" width=90%><br>
+<br>
 
-### **參考資料**
+### **Models Performance**：
+<img src="pics\results_2.png" width=90%><br>
+<br>
+
+### **參考資料**：
 1. Kim, J., Kim, T., Kim, T., Choo, J., Kim, D. W., Ahn, B., ... & Kim, Y. J. (2022, September). Morphology Aware Interactive Keypoint Estimation. In International Conference on Medical Image Computing and Computer Assisted Intervention (pp. 675 685). Cham: Springer Nature Switzerland.
 2. Wu, H., Bailey, Chris., Rasoulinejad, Parham., and Li, S., 2017.Automatic landmark estimation for adolescent idiopathic scoliosis assessment using boostnet. Medical Image Computing and Computer Assisted Intervention:127 135.
 3. Wang, J., Sun, K., Cheng, T., Jiang, B., Deng, C., Zhao, Y., ... & Xiao, B. (2020). Deep high resolution representation learning for visual recognition. IEEE transactions on pattern analysis and machine intelligence, 43(10), 3349 3364.
@@ -85,7 +93,7 @@
 <br><br>
 
 
-### **已訓練模型參數檔**
+## **已訓練之模型參數檔**
 - **UNet IKEM**：<br>
     https://www.dropbox.com/scl/fi/v4raw5q3umwosqy3ggpfi/HRNetOCR_IKEM_12_31.pth?rlkey=d1msnmhhxs2as6kh0zjf0vzxm&dl=0
 - **HRNet+OCR IKEM**：<br>
