@@ -1,7 +1,6 @@
 # **Senior Project** - Interactive Vertebrae Keypoint Estimation
 
-<img src="pics\intro.png" width=78%>
-<img src="pics\process.gif" width=16%><br>
+<img src="pics\intro.png" width=78%> <img src="pics\process.gif" width=16%><br>
 
 ## **參與人員**
 - **指導教授**：張振豪教授
