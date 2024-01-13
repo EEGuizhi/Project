@@ -38,7 +38,7 @@
     最後一次 Feed foward 結束才會計算 loss 並 backward (update model weights)。
 
 - 在決定總提示次數後，每次要修正(提示)的關鍵點，為偵測結果「最差」或「前十差隨機抽1個」的關鍵點。
-- `data_preprocess`：將原始資料集進行整理，後續使用於`tools/dataset.py`中。
+- `data_preprocess.py`：將原始資料集進行整理，後續使用於`tools/dataset.py`中。
 - `test.py`：測試模型準確率(誤差)。
 - `detect.py`：使用模型進行關鍵點偵測。
 - `calc_models_params.ipynb`：計算模型參數量及運算量。
