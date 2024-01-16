@@ -1,6 +1,8 @@
 # **Senior Project** - Interactive Vertebrae Keypoint Estimation
 
 <img src="pics\intro.png" width=82%> <img src="pics\process.gif" width=16.5%><br>
+(本專題獲得國立中興大學電機系112學年度專題競賽第二名)<br>
+<br>
 
 ## **參與人員**
 - **指導教授**：張振豪教授
@@ -28,16 +30,15 @@
     - `Project/IntKeyEst` 存放針對參考資料[1]公開之程式碼進行修改的檔案。
 
 - 在訓練互動式模型時，有兩個用於訓練的檔案 `train_ver1.py` 以及 `train_ver2.py`：<br>
-    - **train_ver1.py**：<br>
+    - `train_ver1.py`：<br>
     基本上以 "模擬使用者互動行為" 的方式進行訓練。<br>
-    - **train_ver2.py**：<br>
+    - `train_ver2.py`：<br>
     相較於前者，此訓練方式目的在於使模型了解 `hint_heatmap` 的作用，<br>
     在模型第一次偵測之前，就可能將要提示的關鍵點輸入至 `hint_heatmap`。
     - **補充**：<br>
-    兩種訓練方式都會先經過數次不計算 gradient 的疊代後，<br>
-    最後一次 Feed foward 結束才會計算 loss 並 backward (update model weights)。
-
-- 在決定總提示次數後，每次要修正(提示)的關鍵點，為偵測結果「最差」或「前十差隨機抽1個」的關鍵點。
+        1. 兩種訓練方式都會先經過數次不計算 gradient 的疊代後，<br>
+           最後一次 Feed foward 結束才會計算 loss 並 backward (update model weights)。
+        2. 在決定總提示次數後，每次要修正(提示)的關鍵點，為偵測結果「最差」或「前十差隨機抽1個」的關鍵點。
 - `data_preprocess.py`：將原始資料集進行整理，後續使用於`tools/dataset.py`中。
 - `test.py`：測試模型準確率(誤差)。
 - `detect.py`：使用模型進行關鍵點偵測。
