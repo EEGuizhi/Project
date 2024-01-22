@@ -1,7 +1,8 @@
 # **Senior Project** - Interactive Vertebrae Keypoint Estimation
 
-<img src="pics\intro.png" width=82%> <img src="pics\process.gif" width=16.5%><br>
-(本專題獲得國立中興大學電機系112學年度專題競賽第二名)<br>
+<img src="pics\intro.png" width=82%> <img src="pics\process.gif" width=16.5%>
+
+$_\text{此專題獲得國立中興大學電機系112學年度專題競賽第二名}$<br>
 <br>
 
 ## **參與人員**
@@ -100,6 +101,6 @@ Flow Chart<br>
 
 ## **已訓練之模型參數檔**
 - **UNet IKEM**：<br>
-    https://www.dropbox.com/scl/fi/v4raw5q3umwosqy3ggpfi/HRNetOCR_IKEM_12_31.pth?rlkey=d1msnmhhxs2as6kh0zjf0vzxm&dl=0
+    [Model - UNet_IKEM_12_31.pth](https://www.dropbox.com/scl/fi/52t2rlvk4czzjsi6opdf9/UNet_IKEM_12_31.pth?rlkey=uzep4bkr7gs0pyfua84i2azv6&dl=0)
 - **HRNet+OCR IKEM**：<br>
-    https://www.dropbox.com/scl/fi/v4raw5q3umwosqy3ggpfi/HRNetOCR_IKEM_12_31.pth?rlkey=d1msnmhhxs2as6kh0zjf0vzxm&dl=0
+    [Model - HRNetOCR_IKEM_12_31.pth](https://www.dropbox.com/scl/fi/v4raw5q3umwosqy3ggpfi/HRNetOCR_IKEM_12_31.pth?rlkey=d1msnmhhxs2as6kh0zjf0vzxm&dl=0)
